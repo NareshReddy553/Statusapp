@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-1n3_3l4g3@w=m0v84a(pxhh4-hi2p#d&gk=7cm3b^=6cau2(^c'
-
+PASSWORD_SALT = b"StAppBsnUnt1"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -93,7 +93,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'dev_tsapp',
+        'NAME': 'tsapp1_dev',
         'USER': 'root',
         'PASSWORD': '16e91a0553',
         'HOST': 'localhost',
@@ -105,6 +105,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = False
 CORS_ALLOW_HEADERS = list(default_headers)
 
+AUTHENTICATION_BACKENDS = ["account.backends.AccountBackend"]
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -125,9 +126,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'account.backends.AccountJWTAuthentication',
     ],
-    "DEFAULT_FILTER_BACKENDS": ("common.backends.JsonFilterBackend",),
+    # "DEFAULT_FILTER_BACKENDS": ("common.backends.JsonFilterBackend",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 20,
 }
@@ -212,6 +214,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# User cache TTL, in seconds
+USER_CACHE_TTL = 900
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
