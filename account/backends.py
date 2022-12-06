@@ -95,8 +95,8 @@ class AccountBackend(BaseBackend, UserBaseBackend):
 
         # 3. compare UserPassword password hash and the calculated hash
         if pwdHash != userPass.password:
-            user.login_attempts = user.login_attempts + 1
-            user.save()
+            # user.login_attempts = user.login_attempts + 1
+            # user.save()
             return None
 
         if not user.is_active:
@@ -105,8 +105,8 @@ class AccountBackend(BaseBackend, UserBaseBackend):
 
         # 4. get the UserProfile's roles
         # reset login_attemps and last login time
-        user.login_attempts = 0
-        user.lastlogin_datetime = datetime.now()
+        # user.login_attempts = 0
+        user.lastlogin_date = datetime.now()
         user.save()
         return self.prep_user(user)
 

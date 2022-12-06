@@ -10,11 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+from pathlib import Path
 from datetime import timedelta
 from corsheaders.defaults import default_headers
+import sys
 
+sys.dont_write_bytecode = True
 
-from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -103,7 +105,9 @@ DATABASES = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = False
-CORS_ALLOW_HEADERS = list(default_headers)
+CORS_ALLOW_HEADERS = list(default_headers)+[
+    "businessunit",
+]
 
 AUTHENTICATION_BACKENDS = ["account.backends.AccountBackend"]
 # Password validation
@@ -198,9 +202,9 @@ LOGGING = {
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -216,6 +220,16 @@ STATIC_URL = '/static/'
 
 # User cache TTL, in seconds
 USER_CACHE_TTL = 900
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
+# EMAIL_HOST = "mail-relay-internal.intra.infousa.com"
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
+DEFAULT_FROM_EMAIL = "nareshgangireddy7167@gmail.com"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 

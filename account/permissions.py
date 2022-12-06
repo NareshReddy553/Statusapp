@@ -26,9 +26,9 @@ class IsSecurityAdmin(BaseStAppPermission):
         return self.check_permission("SecurityAdmin", request)
 
 
-class IsGroupAdmin(BaseStAppPermission):
+class IsBusinessUnitUser(BaseStAppPermission):
     def has_permission(self, request, view):
-        return self.check_permission("GroupAdmin", request)
+        return self.check_permission("BusinessUnitUser", request)
 
 
 class IsTestAdmin(BaseStAppPermission):
