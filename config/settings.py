@@ -92,10 +92,24 @@ DATABASES = {
         'NAME': 'tsapp_dev',
         'USER': 'root',
         'PASSWORD': 'a6uK$X#o0135',
-        'HOST': 'localhost',
+        'HOST': 'ec2-3-16-49-111.us-east-2.compute.amazonaws.com',
         'PORT': '3306',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'tsapp1_dev',
+#         'USER': 'root',
+#         'PASSWORD': '16e91a0553',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+#         }
+#     }
+# }
 
 if "test" in sys.argv:
     DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
@@ -106,17 +120,6 @@ if "test" in sys.argv:
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
 #         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'tsapp1_dev',
-#         'USER': 'root',
-#         'PASSWORD': '16e91a0553',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
 #     }
 # }
 
