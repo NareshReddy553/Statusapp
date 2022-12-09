@@ -85,6 +85,23 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+# DATABASES = {"default": {}}
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'tsapp_dev',
+        'USER': 'root',
+        'PASSWORD': 'a6uK$X#o0135',
+        'HOST': 'localhost',
+        'PORT': '3306',
+    }
+}
+
+if "test" in sys.argv:
+    DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
+    DATABASES["default"]["NAME"] = "databasename.db3"
+
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -92,16 +109,17 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tsapp1_dev',
-        'USER': 'root',
-        'PASSWORD': '16e91a0553',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'tsapp1_dev',
+#         'USER': 'root',
+#         'PASSWORD': '16e91a0553',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
+
 
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = False

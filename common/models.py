@@ -89,6 +89,8 @@ class Components(models.Model):
     )
     component_status = models.ForeignKey(
         ComponentsStatus, on_delete=models.CASCADE, related_name='component_status')
+    has_subgroup = models.BooleanField(
+        db_column='HAS_SUBGROUP', blank=True, null=True)
 
     class Meta:
         managed = False
