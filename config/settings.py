@@ -92,8 +92,11 @@ DATABASES = {
         'NAME': 'tsapp_dev',
         'USER': 'root',
         'PASSWORD': 'a6uK$X#o0135',
-        'HOST': 'ec2-3-16-49-111.us-east-2.compute.amazonaws.com',
+        'HOST': 'host.docker.internal',
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        }
     }
 }
 
