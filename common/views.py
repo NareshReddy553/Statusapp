@@ -26,6 +26,7 @@ def get_businessunits(request):
     else:
         businessunits = UserBusinessunits.objects.select_related().filter(
             allow_access=True, user=request.user).values_list('Businessunit__name', flat=True)
+
     rst['BusinessUnits'] = businessunits
     return Response(rst, status=status.HTTP_200_OK)
 

@@ -24,6 +24,8 @@ class Users(models.Model):
     created_datetime = models.DateTimeField(db_column='CREATED_DATETIME')
 
     modify_datetime = models.DateTimeField(db_column='MODIFY_DATETIME')
+    last_businessiunit_name = models.CharField(
+        db_column='LAST_BUSINESSIUNIT_NAME', max_length=10, blank=True, null=True)
 
     class Meta:
         managed = False

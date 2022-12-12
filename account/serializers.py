@@ -1,11 +1,16 @@
 
-from rest_framework import serializer
+from rest_framework import serializers
 
-from account.models import Users
+from account.account_models import Users
+from common.serializers import BusinessUnitSerializer
 
 
-class UsersSerializer(serializer.ModelSerializer):
+class UsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Users
         fields = '__all__'
+
+
+class UsersProfileSerializer(UsersSerializer):
+    businessunit = BusinessUnitSerializer()

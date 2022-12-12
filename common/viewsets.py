@@ -15,8 +15,13 @@ class FilterBusinessUnitViewset(viewsets.ModelViewSet):
 
 class IncidentsViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
-    queryset = Incidents.objects.all()
     serializer_class = IncidentSerializer
+
+    def get_queryset(self):
+        l_businessunit = self.request.headers.get('businessunit')
+        queryset = Incidents.objects.filter(
+            businessunit__businessunit_name=l_businessunit, is_active=True)
+        return queryset
 
     @action(detail=True, methods=["patch"], url_path="update_incident")
     def update_incident(self, request, pk=None):

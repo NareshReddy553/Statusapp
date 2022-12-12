@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions
 from django.contrib.auth.models import User
-from account.models import Users
+from account.account_models import Users
 from account.permissions import IsSystemAdmin
 from common.serializers import BusinessUnitSerializer
 from rest_framework import status

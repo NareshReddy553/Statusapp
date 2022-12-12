@@ -12,7 +12,7 @@ from rest_framework_simplejwt.authentication import (
     api_settings,
 )
 
-from .models import Role, RolesPrivs, Users, UsersPassword
+from .account_models import Role, RolesPrivs, Users, UsersPassword
 from .utils import get_hashed_password
 
 logger = logging.getLogger("account.backends")
