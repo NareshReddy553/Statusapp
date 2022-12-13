@@ -50,14 +50,15 @@ class IncidentSerializer(serializers.ModelSerializer):
             l_inc_com_obj = [IncidentComponent(
                 incident_id=l_incident.pk,
                 component_id=cmp_sts.get('component_id'),
-                is_active=True
+                is_active=True,
+                businessunit=businessunit_qs
             ) for cmp_sts in components_list]
             for cmp_sts in components_list:
                 Components.objects.filter(pk=cmp_sts.get('component_id')).update(
-                    status=cmp_sts.get('component_id'), modified_datetime=datetime.now(), modifieduser=user)
+                    component_status=cmp_sts.get('component_id'), modified_datetime=datetime.now(), modifieduser=user)
             inc_cmp_obj = IncidentComponent.objects.bulk_create(l_inc_com_obj)
-            Subcrbcom_obj = SubcriberComponent.objects.filter(
-                component_id__in=components_list, businessunit_id=businessunit_qs.pk, is_active=True)
+            # Subcrbcom_obj = SubcriberComponent.objects.filter(
+            #     component_id__in=components_list, businessunit_id=businessunit_qs.pk, is_active=True)
             # TODO
             # Send Mail for the subscriber who subscribed for this components
         return l_incident
