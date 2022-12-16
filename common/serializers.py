@@ -23,12 +23,16 @@ class IncidentSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
     createduser = serializers.SerializerMethodField()
     modifieduser = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField('get_incident_id')
 
     def get_createduser(self, obj):
         return get_cached_user(obj.createduser_id)
 
     def get_modifieduser(self, obj):
         return get_cached_user(obj.modifieduser_id)
+
+    def get_incident_id(self, obj):
+        return obj.incident_id
 
     class Meta:
         model = Incidents
