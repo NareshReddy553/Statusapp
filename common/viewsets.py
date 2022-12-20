@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -23,13 +24,34 @@ class IncidentsViewset(viewsets.ModelViewSet):
             businessunit__businessunit_name=l_businessunit, is_active=True)
         return queryset
 
-    @action(detail=True, methods=["patch"], url_path="update_incident")
+    @action(detail=True, methods=["put"], url_path="update_incident")
     def update_incident(self, request, pk=None):
         input_data = request.data
         l_incident = self.get_object()
-        serializer = self.serializer_class(data=input_data)
+        serializer = self.serializer_class(
+            l_incident, input_data, partial=True)
         if serializer.is_valid():
-            l_incident.save()
+            serializer.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["patch"], url_path="postmorterm")
+    def postmorterm_incident(self, request, pk=None):
+        input_data = request.data
+        if input_data is None or input_data.get('incident_postmortem') is None:
+            raise ValidationError(
+                {
+                    "incident_postmortem": "incident postmortem either in the payload or should not be None or empty string."
+                }
+            )
+        l_incident = self.get_object()
+        l_incident.modifieduser = request.user
+        serializer = self.serializer_class(
+            l_incident, input_data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors,
@@ -60,7 +82,7 @@ class ComponentsViewset(viewsets.ModelViewSet):
     #     return self.queryset \
     #         .filter(businessunit__businessunit_name__in=self.request.GET.get('businessunit'))
 
-    @action(detail=True, methods=["patch"], url_path="update_incident")
+    @action(detail=True, methods=["put"], url_path="update_incident")
     def update_incident(self, request, pk=None):
         input_data = request.data
         l_incident = self.get_object()

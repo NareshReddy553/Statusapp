@@ -200,9 +200,13 @@ class SubcriberComponent(models.Model):
 class UserBusinessunits(models.Model):
     user_businessunits_id = models.AutoField(
         db_column='USER_BUSINESSUNITS_ID', primary_key=True)
-    user_id = models.IntegerField(db_column='USER_ID', blank=True, null=True)
-    businessunit_id = models.IntegerField(
-        db_column='BUSINESSUNIT_ID', blank=True, null=True)
+    # user_id = models.IntegerField(db_column='USER_ID', blank=True, null=True)
+    user = models.ForeignKey(
+        Users, on_delete=models.CASCADE, related_name='usr_bs')
+    # businessunit_id = models.IntegerField(
+    #     db_column='BUSINESSUNIT_ID', blank=True, null=True)
+    businessunit = models.ForeignKey(
+        Businessunits, on_delete=models.CASCADE, related_name='bs_usr')
     allow_access = models.BooleanField(
         db_column='ALLOW_ACCESS', blank=True, null=True)
     created_datetime = models.DateTimeField(
@@ -213,3 +217,35 @@ class UserBusinessunits(models.Model):
     class Meta:
         managed = False
         db_table = 'user_businessunits'
+
+
+class Sidebar(models.Model):
+    sidebar_id = models.AutoField(db_column='SIDEBAR_ID', primary_key=True)
+    sidebar_name = models.CharField(db_column='SIDEBAR_NAME', max_length=100)
+    # businessunit_id = models.IntegerField(db_column='BUSINESSUNIT_ID')
+    businessunit = models.ForeignKey(
+        Businessunits, on_delete=models.CASCADE, related_name='sidebar_bs')
+
+    createduser = models.ForeignKey(
+        Users,
+        models.DO_NOTHING,
+        related_name="sbr_created_user+",
+        blank=True,
+        null=True,
+    )
+    modifieduser = models.ForeignKey(
+        Users,
+        models.DO_NOTHING,
+        related_name="sbr_mdf_user+",
+        blank=True,
+        null=True,
+    )
+    created_datetime = models.DateTimeField(
+        db_column='CREATED_DATETIME', blank=True, null=True)
+    modified_datetime = models.DateTimeField(
+        db_column='MODIFIED_DATETIME', blank=True, null=True)
+    is_active = models.BooleanField(db_column='IS_ACTIVE')
+
+    class Meta:
+        managed = False
+        db_table = 'sidebar'

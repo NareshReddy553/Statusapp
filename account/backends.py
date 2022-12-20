@@ -12,6 +12,8 @@ from rest_framework_simplejwt.authentication import (
     api_settings,
 )
 
+from common.models import UserBusinessunits
+
 from .account_models import Role, RolesPrivs, Users, UsersPassword
 from .utils import get_hashed_password
 
@@ -107,6 +109,8 @@ class AccountBackend(BaseBackend, UserBaseBackend):
         # reset login_attemps and last login time
         # user.login_attempts = 0
         user.lastlogin_date = datetime.now()
+        user_bs_qs = UserBusinessunits.objects.filter(user=user).first()
+        user.last_businessiunit_name = user_bs_qs.businessunit.businessunit_name
         user.save()
         return self.prep_user(user)
 

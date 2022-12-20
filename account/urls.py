@@ -9,10 +9,10 @@ from common.viewsets import ComponentsViewset, IncidentsViewset
 
 
 router = routers.DefaultRouter()
-# router.register(r"profile", UsersViewset, basename="users")
+router.register(r"profile", UsersViewset, basename="users")
 
 urlpatterns = [
     path(r'userprofile', user_profile),
-    # path(r'businessunits', get_businessunits),
+    # path(r'update_businessunit', get_businessunits),
     url("", include(router.urls)),
 ]

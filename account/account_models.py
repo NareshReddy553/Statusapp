@@ -16,7 +16,7 @@ class Users(models.Model):
     phone_number = models.IntegerField(
         db_column='PHONE_NUMBER', blank=True, null=True)
 
-    is_active = models.IntegerField(db_column='IS_ACTIVE')
+    is_active = models.BooleanField(db_column='IS_ACTIVE')
 
     lastlogin_date = models.DateTimeField(
         db_column='LASTLOGIN_DATE', blank=True, null=True)

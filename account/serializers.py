@@ -13,4 +13,7 @@ class UsersSerializer(serializers.ModelSerializer):
 
 
 class UsersProfileSerializer(UsersSerializer):
-    businessunit = BusinessUnitSerializer()
+
+    class Meta:
+        model = Users
+        fields = '__all__'
