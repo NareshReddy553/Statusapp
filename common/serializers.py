@@ -67,6 +67,29 @@ class IncidentSerializer(serializers.ModelSerializer):
             # Send Mail for the subscriber who subscribed for this components
         return l_incident
 
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        l_businessunit_name = self.context['request'].headers.get(
+            'businessunit')
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        user = self.context['request'].user
+        validated_data['modifieduser'] = user
+        l_incident = super().update(instance, validated_data)
+        components_update = self.initial_data.get('components', None)
+        if components_update is not None:
+            compnt_update_obj = list()
+            for cmp_sts in components_update:
+                inc_comp_obj = IncidentComponent.objects.filter(
+                    incident=instance.pk, component=cmp_sts.get('component_id'), is_active=True)
+                if inc_comp_obj:
+                    compnt_update_obj.append(IncidentComponent(
+                        incident_id=l_incident.pk,
+                        component_id=cmp_sts.get('component_id'),
+                        is_active=True,
+                        businessunit=businessunit_qs
+                    ))
+
 
 class ComponentsSerializer(serializers.ModelSerializer):
     component_status = ComponentStatusSerializer()

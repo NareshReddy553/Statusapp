@@ -9,11 +9,6 @@ from common.models import Components, Incidents
 from common.serializers import ComponentsSerializer, IncidentSerializer
 
 
-class FilterBusinessUnitViewset(viewsets.ModelViewSet):
-    def get_queryset(self):
-        pass
-
-
 class IncidentsViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = IncidentSerializer
