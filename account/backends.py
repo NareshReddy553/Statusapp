@@ -110,7 +110,8 @@ class AccountBackend(BaseBackend, UserBaseBackend):
         # user.login_attempts = 0
         user.lastlogin_date = datetime.now()
         user_bs_qs = UserBusinessunits.objects.filter(user=user).first()
-        user.last_businessiunit_name = user_bs_qs.businessunit.businessunit_name
+        if user.last_businessiunit_name is None:
+            user.last_businessiunit_name = user_bs_qs.businessunit.businessunit_name
         user.save()
         return self.prep_user(user)
 
