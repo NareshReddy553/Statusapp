@@ -8,6 +8,9 @@
 from django.db import models
 
 from account.account_models import Users
+from common.softdelete.managers import SoftDeleteManger
+from common.softdelete.models import SoftDeleteModelMixin
+from common.softdelete.querysets import SoftDeletionQuerySet
 
 
 class Businessunits(models.Model):
@@ -88,7 +91,7 @@ class Components(models.Model):
         null=True,
     )
     component_status = models.ForeignKey(
-        ComponentsStatus, on_delete=models.CASCADE, related_name='component_status')
+        ComponentsStatus, on_delete=models.CASCADE, related_name='component_status+')
     has_subgroup = models.BooleanField(
         db_column='HAS_SUBGROUP', blank=True, null=True)
 
@@ -98,7 +101,8 @@ class Components(models.Model):
         ordering = ['display_order', 'subgroup_display_order']
 
 
-class Incidents(models.Model):
+class Incidents(SoftDeleteModelMixin):
+    objects = SoftDeleteManger()
     incident_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=250)
     status = models.CharField(max_length=50, blank=True, null=True)
@@ -126,10 +130,13 @@ class Incidents(models.Model):
         blank=True,
         null=True,
     )
+    isdeleted = models.BooleanField(
+        db_column='ISDELETED', blank=True, null=True, default=False)
 
     class Meta:
         managed = False
         db_table = 'incidents'
+        ordering = ['-modify_datetime']
 
 
 class Subscribers(models.Model):

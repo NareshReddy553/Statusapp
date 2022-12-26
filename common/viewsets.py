@@ -1,3 +1,4 @@
+import datetime
 from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -5,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 
-from common.models import Components, Incidents
+from common.models import Components, IncidentComponent, Incidents
 from common.serializers import ComponentsSerializer, IncidentSerializer
 
 
@@ -16,7 +17,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
     def get_queryset(self):
         l_businessunit = self.request.headers.get('businessunit')
         queryset = Incidents.objects.filter(
-            businessunit__businessunit_name=l_businessunit, is_active=True)
+            businessunit__businessunit_name=l_businessunit, is_active=True, isdeleted=False)
         return queryset
 
     @action(detail=True, methods=["put"], url_path="update_incident")
@@ -47,18 +48,24 @@ class IncidentsViewset(viewsets.ModelViewSet):
             l_incident, input_data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["delete"], url_path="delete_incident")
     def delete_incident(self, request, pk=None):
-        input_data = request.data
         l_incident = self.get_object()
         try:
-            deleted_obj = l_incident.delete()
-            return Response(deleted_obj, status=status.HTTP_200_OK)
+            # deleted_obj = Incidents.objects.filter(pk=pk).update(isdeleted=True,
+            #  modifieduser=request.user, modify_datetime=datetime.datetime.now())
+            l_incident.isdeleted = True
+            l_incident.modifieduser = request.user
+            l_incident.modify_datetime = datetime.datetime.now()
+            l_incident.save()
+            IncidentComponent.objects.filter(
+                incident=l_incident,).update(is_active=False, modify_datetime=datetime.datetime.now())
+            return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
