@@ -167,7 +167,7 @@ class IncidentComponent(models.Model):
         db_column='INCIDENT_COMPONENT_id', primary_key=True)
     # incident_id = models.IntegerField(db_column='INCIDENT_ID')
     incident = models.ForeignKey(
-        Incidents, related_name="incidents", on_delete=models.CASCADE)
+        Incidents, related_name="incidents_comp", on_delete=models.CASCADE)
     # component_id = models.IntegerField(db_column='COMPONENT_ID')
     component = models.ForeignKey(
         Components, related_name="com", on_delete=models.CASCADE)

@@ -69,3 +69,7 @@ def get_sidebar_list(request):
     if "SystemAdmin" not in request.user.privileges:
         sidebar_list.remove('Security')
     return Response(sidebar_list, status=status.HTTP_200_OK)
+
+
+def Mytemplates(request):
+    return render(request, 'index.html')

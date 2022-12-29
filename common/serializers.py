@@ -19,11 +19,29 @@ class ComponentStatusSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ComponentsSerializer(serializers.ModelSerializer):
+    component_status = ComponentStatusSerializer()
+    businessunit = BusinessUnitSerializer()
+
+    class Meta:
+        model = Components
+        fields = '__all__'
+
+
+class IncidentsComponentsSerializer(serializers.ModelSerializer):
+    Components = ComponentsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = IncidentComponent
+        fields = '__all__'
+
+
 class IncidentSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
     createduser = serializers.SerializerMethodField()
     modifieduser = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField('get_incident_id')
+    components = serializers.SerializerMethodField()
 
     def get_createduser(self, obj):
         return get_cached_user(obj.createduser_id)
@@ -33,6 +51,21 @@ class IncidentSerializer(serializers.ModelSerializer):
 
     def get_incident_id(self, obj):
         return obj.incident_id
+
+    def get_components(self, obj):
+        final_list = []
+        inc_comp_obj = IncidentComponent.objects.filter(
+            incident=obj.pk, is_active=True)
+        if inc_comp_obj:
+            for data_obj in inc_comp_obj:
+                temp_dict = {}
+                if data_obj.component.is_active:
+                    temp_dict['component_id'] = data_obj.component.component_id
+                    temp_dict['component_name'] = data_obj.component.component_name
+                    temp_dict['component_status'] = data_obj.component.component_status.component_status_name
+                    temp_dict['businessunit'] = data_obj.component.businessunit.businessunit_name
+                    final_list.append(temp_dict)
+        return final_list
 
     class Meta:
         model = Incidents
@@ -92,12 +125,3 @@ class IncidentSerializer(serializers.ModelSerializer):
     #                     businessunit=businessunit_qs
     #                 ))
     #     return l_incident
-
-
-class ComponentsSerializer(serializers.ModelSerializer):
-    component_status = ComponentStatusSerializer()
-    businessunit = BusinessUnitSerializer()
-
-    class Meta:
-        model = Components
-        fields = '__all__'
