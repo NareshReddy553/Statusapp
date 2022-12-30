@@ -1,5 +1,7 @@
 from django.forms import model_to_dict
 
+from common.models import ComponentsStatus
+
 
 def component_group_order(query):
     local_final_dict = dict()
@@ -11,3 +13,16 @@ def component_group_order(query):
     local_final_dict['component_status'] = model_to_dict(
         query.component_status)
     return local_final_dict
+
+
+def get_component_status():
+    comp_status_obj = ComponentsStatus.objects.values(
+        'component_status_id', 'component_status_name')
+    status_list = []
+    if comp_status_obj:
+        for data in comp_status_obj:
+            status_dict = {}
+            status_dict[data['component_status_name']
+                        ] = data['component_status_id']
+            status_list.append(status_dict)
+    return status_list
