@@ -39,7 +39,6 @@ class IncidentsViewset(viewsets.ModelViewSet):
             l_incident, input_data)
         if serializer.is_valid():
             serializer.save()
-            status_list = get_component_status()
             # inc_comp_obj = IncidentComponent.objects.filter(incident=pk)
             inc_comp_update = []
             inc_comp_create = []
@@ -47,37 +46,41 @@ class IncidentsViewset(viewsets.ModelViewSet):
             l_datetime = datetime.datetime.now()
             for new_comp_obj in new_components:  # COmponets obj list
                 inc_comp_qs = IncidentComponent.objects.filter(
-                    incident=pk, component=new_comp_obj.component_id).first()
+                    incident=pk, component=new_comp_obj.get('component_id')).first()
                 qs_component = Components.objects.get(
-                    pk=new_comp_obj.component_id)
-                for status_data in status_list:
-                    l_status_id = status_data.get(
-                        new_comp_obj.component_status)
-                    if l_status_id:
-                        break
+                    pk=new_comp_obj.get('component_id'))
+                l_status_id = get_component_status(
+                    new_comp_obj.get('component_status'))
                 if inc_comp_qs:
                     # So we have the recor for this component and incident we need to do check weather status is changed or not
                     # status check
 
-                    if qs_component and not qs_component.component_status == l_status_id:  # if status not match
+                    if qs_component and not qs_component.component_status_id == l_status_id:  # if status not match
                         # Update components status if it is updated in incident
                         qs_component.modifieduser = request.user
-                        qs_component.component_status = l_status_id
+                        qs_component.component_status_id = l_status_id
                         component_update.append(qs_component)
 
                 else:
                     # create a new object incident and uodate the status
                     inc_comp_create.append(IncidentComponent(
-                        incident=pk, component=new_comp_obj.component_id, is_active=True, created_datetime=l_datetime, modify_datetime=l_datetime, businessunit=businessunit_qs.pk))
+                        incident=l_incident, component_id=new_comp_obj.get('component_id'), is_active=True, created_datetime=l_datetime, modify_datetime=l_datetime, businessunit_id=businessunit_qs.pk))
                     if qs_component:
                         qs_component.modifieduser = request.user
-                        qs_component.component_status = l_status_id
+                        qs_component.component_status_id = l_status_id
                         component_update.append(qs_component)
 
             if uncheck_components:
                 for uncheck_comp_data in uncheck_components:
-                    IncidentComponent.objects.filter(incident=pk, component=uncheck_comp_data.component_id).update(
-                        isactive=False, modify_datetime=l_datetime)
+                    IncidentComponent.objects.filter(incident_id=pk, component_id=uncheck_comp_data['component_id']).update(
+                        is_active=False, modify_datetime=l_datetime)
+            if inc_comp_create:
+                IncidentComponent.objects.bulk_create(inc_comp_create)
+            if component_update:
+                Components.objects.bulk_update(
+                    component_update, fields=['modifieduser', 'component_status', ])
+
+            # TODO need to send the mail
 
             # for inc_comp_obj_data in inc_comp_obj:#components incident obj
             #     for new_comp_obj in new_components:# COmponets obj list

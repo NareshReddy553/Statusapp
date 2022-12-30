@@ -15,14 +15,12 @@ def component_group_order(query):
     return local_final_dict
 
 
-def get_component_status():
+def get_component_status(Status_name=None):
     comp_status_obj = ComponentsStatus.objects.values(
         'component_status_id', 'component_status_name')
-    status_list = []
-    if comp_status_obj:
-        for data in comp_status_obj:
-            status_dict = {}
-            status_dict[data['component_status_name']
-                        ] = data['component_status_id']
-            status_list.append(status_dict)
-    return status_list
+    status_id = None
+    for obj_data in comp_status_obj:
+        if obj_data['component_status_name'] == 'Partial Outage':
+            status_id = obj_data['component_status_id']
+            break
+    return status_id
