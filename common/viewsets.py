@@ -36,7 +36,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
         l_incident.modifieduser = user
         l_incident.modified_datetime = datetime.datetime.now()
         serializer = self.serializer_class(
-            l_incident, input_data)
+            l_incident, input_data, partial=True)
         if serializer.is_valid():
             serializer.save()
             # inc_comp_obj = IncidentComponent.objects.filter(incident=pk)
@@ -44,31 +44,33 @@ class IncidentsViewset(viewsets.ModelViewSet):
             inc_comp_create = []
             component_update = []
             l_datetime = datetime.datetime.now()
-            for new_comp_obj in new_components:  # COmponets obj list
-                inc_comp_qs = IncidentComponent.objects.filter(
-                    incident=pk, component=new_comp_obj.get('component_id')).first()
-                qs_component = Components.objects.get(
-                    pk=new_comp_obj.get('component_id'))
-                l_status_id = get_component_status(
-                    new_comp_obj.get('component_status'))
-                if inc_comp_qs:
-                    # So we have the recor for this component and incident we need to do check weather status is changed or not
-                    # status check
+            if new_components:
 
-                    if qs_component and not qs_component.component_status_id == l_status_id:  # if status not match
-                        # Update components status if it is updated in incident
-                        qs_component.modifieduser = request.user
-                        qs_component.component_status_id = l_status_id
-                        component_update.append(qs_component)
+                for new_comp_obj in new_components:  # COmponets obj list
+                    inc_comp_qs = IncidentComponent.objects.filter(
+                        incident=pk, component=new_comp_obj.get('component_id')).first()
+                    qs_component = Components.objects.get(
+                        pk=new_comp_obj.get('component_id'))
+                    l_status_id = get_component_status(
+                        new_comp_obj.get('component_status'))
+                    if inc_comp_qs:
+                        # So we have the recor for this component and incident we need to do check weather status is changed or not
+                        # status check
 
-                else:
-                    # create a new object incident and uodate the status
-                    inc_comp_create.append(IncidentComponent(
-                        incident=l_incident, component_id=new_comp_obj.get('component_id'), is_active=True, created_datetime=l_datetime, modify_datetime=l_datetime, businessunit_id=businessunit_qs.pk))
-                    if qs_component:
-                        qs_component.modifieduser = request.user
-                        qs_component.component_status_id = l_status_id
-                        component_update.append(qs_component)
+                        if qs_component and not qs_component.component_status_id == l_status_id:  # if status not match
+                            # Update components status if it is updated in incident
+                            qs_component.modifieduser = request.user
+                            qs_component.component_status_id = l_status_id
+                            component_update.append(qs_component)
+
+                    else:
+                        # create a new object incident and uodate the status
+                        inc_comp_create.append(IncidentComponent(
+                            incident=l_incident, component_id=new_comp_obj.get('component_id'), is_active=True, created_datetime=l_datetime, modify_datetime=l_datetime, businessunit_id=businessunit_qs.pk))
+                        if qs_component:
+                            qs_component.modifieduser = request.user
+                            qs_component.component_status_id = l_status_id
+                            component_update.append(qs_component)
 
             if uncheck_components:
                 for uncheck_comp_data in uncheck_components:
