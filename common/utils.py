@@ -20,7 +20,7 @@ def get_component_status(Status_name=None):
         'component_status_id', 'component_status_name')
     status_id = None
     for obj_data in comp_status_obj:
-        if obj_data['component_status_name'] == 'Partial Outage':
+        if obj_data['component_status_name'] == Status_name:
             status_id = obj_data['component_status_id']
             break
     return status_id
