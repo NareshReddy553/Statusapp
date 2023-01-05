@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from common.models import Businessunits, Components, IncidentComponent, Incidents
 from common.serializers import ComponentsSerializer, IncidentSerializer
 from common.utils import get_component_status
+from common.mailer import send_email
 
 
 class IncidentsViewset(viewsets.ModelViewSet):
@@ -56,15 +57,20 @@ class IncidentsViewset(viewsets.ModelViewSet):
                     if inc_comp_qs:
                         # So we have the recor for this component and incident we need to do check weather status is changed or not
                         # status check
+                        # If incident component object is inactive then we need to update that object
+                        if not inc_comp_qs.is_active:
+                            inc_comp_qs.is_active=True
+                            inc_comp_qs.modify_datetime=l_datetime
+                            inc_comp_update.append(inc_comp_qs)
 
                         if qs_component and not qs_component.component_status_id == l_status_id:  # if status not match
                             # Update components status if it is updated in incident
                             qs_component.modifieduser = request.user
                             qs_component.component_status_id = l_status_id
                             component_update.append(qs_component)
-
+                            
                     else:
-                        # create a new object incident and uodate the status
+                        # create a new object incident and update the status
                         inc_comp_create.append(IncidentComponent(
                             incident=l_incident, component_id=new_comp_obj.get('component_id'), is_active=True, created_datetime=l_datetime, modify_datetime=l_datetime, businessunit_id=businessunit_qs.pk))
                         if qs_component:
@@ -81,35 +87,13 @@ class IncidentsViewset(viewsets.ModelViewSet):
             if component_update:
                 Components.objects.bulk_update(
                     component_update, fields=['modifieduser', 'component_status', ])
+            if inc_comp_update:
+                IncidentComponent.objects.bulk_update(
+                    inc_comp_update, fields=['modify_datetime', 'is_active', ])
 
+            # send_email('index.html', None, 'test_email',
+            #            ['naresh.gangireddy@data-axle.com'], [])
             # TODO need to send the mail
-
-            # for inc_comp_obj_data in inc_comp_obj:#components incident obj
-            #     for new_comp_obj in new_components:# COmponets obj list
-            #         for new_comp_obj_data in new_comp_obj: #components obj dict
-            #             if inc_comp_obj_data.pk == new_comp_obj_data.component_id:# if component is already is present need to update it
-
-            #                 for status_data in status_list:
-            #                     l_status_id = status_data.get(
-            #                         new_comp_obj_data.component_status)
-            #                     if l_status_id:
-            #                         break
-            #                 l_status_id = new_comp_obj_data.component_status
-            #                 qs_component = Components.objects.get(
-            #                     pk=new_comp_obj_data.component_id)
-            #                 if qs_component and not qs_component.component_status == l_status_id:
-            #                     # Update components status if it is updated in incident
-            #                     qs_component.modifieduser = request.user
-            #                     qs_component.component_status = l_status_id
-            #                     component_update.append(qs_component)
-
-            #                 # Update the incident_component table
-            #                 qs_inccomp = IncidentComponent.objects.filter(incident=pk,
-            #                                                               component=new_comp_obj_data.component_id)
-            #                 qs_inccomp.is_active = True
-            #                 qs_component.modify_datetime = datetime.datetime.now()
-            #                 inc_comp_update.append(IncidentComponent(
-            #                     is_active=True, component=new_comp_obj_data.component_id, modify_datetime=datetime.datetime.now()))
 
             return Response(status=status.HTTP_200_OK)
         else:
