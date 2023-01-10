@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# DATABASES = {"default": {}}
+DATABASES = {"default": {}}
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -250,11 +250,11 @@ USER_CACHE_TTL = 900
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_USE_TLS = True
-# EMAIL_HOST = "mail-relay-internal.intra.infousa.com"
+EMAIL_HOST = "mail-relay-internal.intra.infousa.com"
 EMAIL_PORT = 25
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
-DEFAULT_FROM_EMAIL = "nareshgangireddy7167@gmail.com"
+DEFAULT_FROM_EMAIL = "TSAPP@data-axle.com"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

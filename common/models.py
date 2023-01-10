@@ -256,3 +256,26 @@ class Sidebar(models.Model):
     class Meta:
         managed = False
         db_table = 'sidebar'
+
+
+class IncidentsActivity(models.Model):
+    incidents_activity_id = models.AutoField(primary_key=True)
+    incident_id = models.IntegerField()
+    incident_name = models.CharField(max_length=250, blank=True, null=True)
+    message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=25, blank=True, null=True)
+    businessunit_id = models.IntegerField()
+    component_id = models.IntegerField()
+    component_name = models.CharField(max_length=100, blank=True, null=True)
+    component_status = models.CharField(max_length=100, blank=True, null=True)
+    component_status_id = models.IntegerField()
+    createduser_id = models.IntegerField(blank=True, null=True)
+    modifieduser_id = models.IntegerField(blank=True, null=True)
+    created_datetime = models.DateTimeField(
+        blank=True, null=True, auto_now_add=True)
+    modified_datetime = models.DateTimeField(
+        blank=True, null=True, auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = 'incidents_activity'
