@@ -218,7 +218,7 @@ class IncidentsActivityViewset(viewsets.ModelViewSet):
     serializer_class = IncidentsActivitySerializer
     queryset = IncidentsActivity.objects.all()
 
-    @action(detail=False, methods=["get"], url_path="incident_activity")
+    @action(detail=False, methods=["put"], url_path="incident_activity")
     def incident_activity_on_incident_id(self, request, pk=None):
         input_data = request.data
         if input_data is None or input_data.get('incident_id') is None:
