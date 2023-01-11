@@ -66,7 +66,7 @@ class IncidentSerializer(serializers.ModelSerializer):
                     temp_dict['component_id'] = data_obj.component.component_id
                     temp_dict['component_name'] = data_obj.component.component_name
                     temp_dict['component_status'] = data_obj.component.component_status.component_status_name
-                    if l_last_component_status and len(l_last_component_status) >= 1:
+                    if l_last_component_status and len(l_last_component_status) >= 2:
                         temp_dict['last_component_status'] = l_last_component_status[1].component_status
                     else:
                         temp_dict['last_component_status'] = None
