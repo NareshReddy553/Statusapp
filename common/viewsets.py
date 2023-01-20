@@ -109,24 +109,24 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 inc_cmp_obj = IncidentComponent.objects.bulk_create(
                     inc_comp_create)
                 # Need entry in the incident activity table each time when we create the incident
-                if inc_cmp_obj:
-                    for inc_cmp_data in inc_cmp_obj:
-                        cmp_qs = Components.objects.filter(
-                            component_id=inc_cmp_data.component_id).first()
-                        l_incident_activity.append(IncidentsActivity(
-                            incident_id=l_incident.pk,
-                            incident_name=l_incident.name,
-                            message=l_incident.message,
-                            status=l_incident.status,
-                            businessunit_id=l_incident.businessunit_id,
-                            component_id=cmp_qs.component_id,
-                            component_name=cmp_qs.component_name,
-                            component_status=cmp_qs.component_status.component_status_name,
-                            component_status_id=cmp_qs.component_status.component_status_id,
-                            createduser_id=user.user_id,
-                            modifieduser_id=user.user_id,
-                            created_datetime=datetime.datetime.now(),
-                            modified_datetime=datetime.datetime.now()))
+                # if inc_cmp_obj:
+                #     for inc_cmp_data in inc_cmp_obj:
+                #         cmp_qs = Components.objects.filter(
+                #             component_id=inc_cmp_data.component_id).first()
+                #         l_incident_activity.append(IncidentsActivity(
+                #             incident_id=l_incident.pk,
+                #             incident_name=l_incident.name,
+                #             message=l_incident.message,
+                #             status=l_incident.status,
+                #             businessunit_id=l_incident.businessunit_id,
+                #             component_id=cmp_qs.component_id,
+                #             component_name=cmp_qs.component_name,
+                #             component_status=cmp_qs.component_status.component_status_name,
+                #             component_status_id=cmp_qs.component_status.component_status_id,
+                #             createduser_id=user.user_id,
+                #             modifieduser_id=user.user_id,
+                #             created_datetime=datetime.datetime.now(),
+                #             modified_datetime=datetime.datetime.now()))
             if l_incident_activity:
                 incident_activity_obj = IncidentsActivity.objects.bulk_create(
                     l_incident_activity)

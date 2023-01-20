@@ -41,4 +41,4 @@ def get_components_all_list(queryset,):
                 local_list.append(local_temp_dict)
         local_final_dict['sub_component'] = local_list
         finaldata_list.append(local_final_dict)
-        return finaldata_list
+    return finaldata_list

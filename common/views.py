@@ -60,10 +60,6 @@ def get_sidebar_list(request):
     return Response(sidebar_list, status=status.HTTP_200_OK)
 
 
-def Mytemplates(request):
-    return render(request, 'index.html')
-
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_dashboard_incident_component_status(request):
@@ -71,16 +67,19 @@ def get_dashboard_incident_component_status(request):
         businessunit_name=request.headers.get('businessunit')).first().businessunit_id
     component_status_incident = []
     l_status_list = ComponentsStatus.objects.values_list(
-        'component_status_name')
+        'component_status_name', flat=True)
     if l_status_list:
-        for status in l_status_list:
+        for l_status in l_status_list:
             status_dict = {}
             l_IncidentsActivity = IncidentsActivity.objects.filter(
-                component_status=status, businessunit_id=l_business_unit).order_by('-modified_datetime').first()
+                component_status=l_status, businessunit_id=l_business_unit).order_by('-modified_datetime').first()
             if l_IncidentsActivity:
                 status_dict['incident_id'] = l_IncidentsActivity.incident_id
                 status_dict['component_status'] = l_IncidentsActivity.component_status
                 status_dict['component_id'] = l_IncidentsActivity.component_id
                 component_status_incident.append(status_dict)
-
     return Response(component_status_incident, status=status.HTTP_200_OK)
+
+
+def Mytemplates(request):
+    return render(request, 'index.html')
