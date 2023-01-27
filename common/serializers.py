@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from account.services import get_cached_user
 from django.db import transaction
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SubcriberComponent, IncidentsActivity
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SubcriberComponent, IncidentsActivity, Subscribers
+from common.mailer import send_email
 
 
 class BusinessUnitSerializer(serializers.ModelSerializer):
@@ -90,7 +91,9 @@ class IncidentSerializer(serializers.ModelSerializer):
         validated_data['modifieduser'] = user
         l_incident = super().create(validated_data)
         components_list = self.initial_data.get('components', None)
+        components_effected = list()
         l_incident_activity = list()
+        Subscriber_list = list()
         if components_list is not None:
             # Need entry in the incident component table which incident_id and component_id with respect to business_id
             l_inc_com_obj = [IncidentComponent(
@@ -103,9 +106,20 @@ class IncidentSerializer(serializers.ModelSerializer):
                 component_status_obj = ComponentsStatus.objects.filter(
                     component_status_name=cmp_sts.get('component_status')).first()
                 # update the component status in component table
-                Components.objects.filter(pk=cmp_sts.get('component_id')).update(
-                    component_status=component_status_obj, modified_datetime=datetime.now(), modifieduser=user)
+                update_component_obj = Components.objects.filter(pk=cmp_sts.get('component_id')).first()
+                update_component_obj.component_status = component_status_obj
+                update_component_obj.modified_datetime=datetime.now()
+                update_component_obj.modifieduser=user
+                update_component_obj.save()
+                components_effected.append(update_component_obj.component_name)
+                # We have to get the component subscribers from incident created
+
+                subcomp_obj = list(SubcriberComponent.objects.filter(
+                    component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
+                if subcomp_obj:
+                    Subscriber_list += (subcomp_obj)
             inc_cmp_obj = IncidentComponent.objects.bulk_create(l_inc_com_obj)
+
             # Need entry in the incident activity table each time when we create the incident
             if inc_cmp_obj:
                 for inc_cmp_data in inc_cmp_obj:
@@ -128,10 +142,26 @@ class IncidentSerializer(serializers.ModelSerializer):
             if l_incident_activity:
                 incident_activity_obj = IncidentsActivity.objects.bulk_create(
                     l_incident_activity)
-            # Subcrbcom_obj = SubcriberComponent.objects.filter(
-            #     component_id__in=components_list, businessunit_id=businessunit_qs.pk, is_active=True)
             # TODO
-            # Send Mail for the subscriber who subscribed for this components
+            if Subscriber_list:
+                # Send Mail for the subscriber who subscribed for this components
+                subscribers_email = list(Subscribers.objects.filter(
+                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
+                if subscribers_email:
+                    context = {
+                        "incident_data": l_incident,
+                        "component_data": components_effected,
+                        "user": user.email
+                    }
+                    x = datetime.now().strftime("%x %I:%M %p")
+                    l_status = str(l_incident.status).capitalize()
+                    subject = f"[Data Axle platform status updates] Incident {l_status} - Admin"
+                    send_email(
+                        template="incident_email_notification1.html",
+                        subject=subject,
+                        context_data=context,
+                        recipient_list=subscribers_email,
+                    )
         return l_incident
 
 

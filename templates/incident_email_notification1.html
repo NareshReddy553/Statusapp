@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="format-detection" content="date=no" />
+        <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=no;" />
+        <title>Dynamic incident Notification</title>
+
+        <!-- ******************** -->
+        <!-- **** WEB FONTS ***** -->
+        <!-- ******************** -->
+        <link href="https://fonts.googleapis.com/css?family=Raleway:300,400,500,600,700" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css?family=Merriweather:400,700" rel="stylesheet" />
+        <style type="text/css">
+            .raleway {
+                font-family: "Raleway", Arial, Helvetica, sans-serif !important;
+            }
+            .merriweather {
+                font-family: "Merriweather", Arial, Helvetica, sans-serif !important;
+            }
+        </style>
+        <style type="text/css">
+            * {
+                -webkit-text-size-adjust: none;
+            } /* prevent iOS font upsizing */
+
+            .ExternalClass * {
+                line-height: 100%;
+            } /* force Outlook.com to honor line-height */
+
+            td {
+                mso-line-height-rule: exactly;
+            }
+
+            a[x-apple-data-detectors] {
+                color: inherit !important;
+                text-decoration: none !important;
+                font-size: inherit !important;
+                font-family: inherit !important;
+                font-weight: inherit !important;
+                line-height: inherit !important;
+            }
+            u + #body a {
+                color: inherit;
+                text-decoration: none;
+                font-size: inherit;
+                font-family: inherit;
+                font-weight: inherit;
+                line-height: inherit;
+            }
+            /** Hover Effects **/
+
+            .hoverCTA:hover {
+                background-color: #000000 !important;
+                color: #ffffff !important;
+                transition: ease 0.3s;
+                -moz-transition: ease 0.3s;
+            }
+
+            .hoverCTA:hover a {
+                color: #ffffff !important;
+                transition: ease 0.5s;
+                -moz-transition: ease 0.5s;
+            }
+
+            /*** Responsive CSS ***/
+            @media only screen and (max-width: 414px) {
+                /*** Layout ***/
+                body {
+                    width: 100%;
+                    min-width: 100%;
+                    position: relative;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    margin: 0;
+                    padding: 0;
+                }
+                .marginFix {
+                    position: relative;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                }
+                .full-width-container {
+                    width: 100% !important;
+                    min-width: 320px !important;
+                }
+                .full-width-container-inner {
+                    width: 100% !important;
+                    min-width: 100% !important;
+                    padding: 0px 0px 0px 0px !important;
+                }
+                .hide {
+                    width: 0px !important;
+                    height: 0px !important;
+                    display: none !important;
+                }
+                .show {
+                    display: table !important;
+                    width: 100% !important;
+                    height: auto !important;
+                    max-height: inherit !important;
+                    overflow: visible !important;
+                    float: none !important;
+                }
+                .full-width {
+                    width: 100% !important;
+                    min-width: 100% !important;
+                }
+
+                .stackTbl {
+                    width: 100% !important;
+                    display: table !important;
+                }
+                .stackTblMarginTop {
+                    width: 100% !important;
+                    display: table !important;
+                    margin-top: 20px !important;
+                }
+                .displayBlock {
+                    display: block !important;
+                    width: 100% !important;
+                }
+                .center {
+                    margin: 0px auto !important;
+                }
+                .left {
+                    text-align: left !important;
+                }
+                .alignCenter {
+                    text-align: center !important;
+                }
+                .floatLeft {
+                    float: left !important;
+                    width: 35% !important;
+                }
+                .floatRight {
+                    float: right !important;
+                    width: 60% !important;
+                }
+                .autoHeight {
+                    height: auto !important;
+                }
+                .bgCover {
+                    background-size: contain !important;
+                }
+                /*** Padding Styles ***/
+                .mobilePadding {
+                    padding: 20px 20px 20px 20px !important;
+                }
+                .padding0 {
+                    padding: 0px !important;
+                }
+                .topPadding0 {
+                    padding-top: 0px !important;
+                }
+                .topPadding10 {
+                    padding-top: 10px !important;
+                }
+                .topPadding20 {
+                    padding-top: 20px !important;
+                }
+                .topPadding30 {
+                    padding-top: 30px !important;
+                }
+                .topPadding40 {
+                    padding-top: 40px !important;
+                }
+                .bottomPadding0 {
+                    padding-bottom: 0px !important;
+                }
+                .bottomPadding10 {
+                    padding-bottom: 10px !important;
+                }
+                .bottomPadding20 {
+                    padding-bottom: 20px !important;
+                }
+                .bottomPadding30 {
+                    padding-bottom: 30px !important;
+                }
+                .bottomPadding40 {
+                    padding-bottom: 40px !important;
+                }
+                .leftPadding0 {
+                    padding-left: 0px !important;
+                }
+                .leftPadding5 {
+                    padding-left: 5px !important;
+                }
+                .leftPadding10 {
+                    padding-left: 10px !important;
+                }
+                .leftPadding20 {
+                    padding-left: 20px !important;
+                }
+                .rightPadding0 {
+                    padding-right: 0px !important;
+                }
+                .rightPadding10 {
+                    padding-right: 10px !important;
+                }
+                .rightPadding20 {
+                    padding-right: 20px !important;
+                }
+
+                /*** Text/Divider/Image Styles ***/
+
+                .divider {
+                    width: 95% !important;
+                }
+                .divider115 {
+                    width: 115px !important;
+                }
+                .fullWidthImg {
+                    width: 100% !important;
+                    height: auto !important;
+                    min-width: 100% !important;
+                }
+            }
+        </style>
+        <body id="body" style="margin:0px; padding:0px; min-width: 320px; font-family:'Montserrat-Regular', Arial, sans-serif;">
+            <!-- HIDDEN PREHEADER -->
+            
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="hide">
+                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>                       
+                      </tr>
+                    </table></td>
+                </tr>
+              </table>
+              
+             <!-- END HIDDEN PREHEADER -->
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" class="marginFix">
+                <tr width="100%" bgcolor="#efeff0" class="bgCover" align="center" background="{% static 'images/body_bg.png'%}" valign="bottom" style="background-size: 50%; background-repeat: repeat;">
+                    <td>
+
+
+                        <!-- Logo -->
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" class="full-width">
+                            <tr>
+                            <td valign="bottom">
+                                    
+                                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                
+                                    <!-- adjust height below -->
+                                    <td align="center" valign="middle">
+                                        <table cellpadding="0" cellspacing="0" border="0" align="center" width="100%">
+                                        <tr>
+                                            <td align="center" valign="top" style="padding: 30px 0px 30px 0px;">
+                                            <a href="https://www.data-axle.com/" target="_blank">
+                                            <img src="{% static 'images\data_axle_stack_color.png'%}" style="font-size: 36px; font-family: Arial, Helvetica, sans-serif; color: #ffffff; text-emphasis: italic; border-style:none;" border="0" alt="Data-Axle" width="140" height="90"></a>
+                                            </td>
+                                        </tr>
+                                        </table>
+                                    </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            </tr>
+                        </table> 
+
+
+                        <!-- Feature Image A Part 1 (Height 62px) -->
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" class="marginFix" style="margin: 0px; padding 0px; border-collapse: collapse;">
+                            <tr>
+                                <td align="center" valign="bottom">
+                                    <table width="600" cellpadding="0" cellspacing="0" border="0" style="width: 600px; border-collapse: collapse;" class="full-width">
+                                        <tr>
+                                            <td align="center" valign="bottom">
+                                                <img src="http://media.4at5.net/email_domains/webp/billa/ym-newsletter/YLM_hero_01.jpg" width="600" height="62" border="0" style="display: block;" class="fullWidthImg" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- Feature A Image Part 1 -->
+
+                        <!--[if gte mso 9]>
+                                </v:textbox>
+                                </v:rect>
+                                <![endif]-->
+
+                        <!-- Feature A Image Part 2 -->
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0">
+                            <tr>
+                                <td align="center">
+                                    <table width="600" cellpadding="0" cellspacing="0" border="0" style="width: 600px;" class="full-width">
+                                        <tr>
+                                            <td align="center" valign="bottom">
+                                                <img src="http://media.4at5.net/email_domains/webp/billa/ym-newsletter/YLM_hero_02.jpg" width="600" height="138" border="0" style="display: block;" class="fullWidthImg" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- Feature A Image Part 2 -->
+
+
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0" style="background-color:#efeff0;">
+                            <tr>
+                              <td height="30" style="font-size:30px; line-height:30px;">&nbsp;</td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Incident details-->
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0">
+                            <tr>
+                                <td align="center">
+                                    <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0" style="width: 600px;" class="full-width">
+                                        <tr>
+                                            <td
+                                                align="middle"
+                                                class="raleway"
+                                                bgcolor="#ffffff"
+                                                valign="bottom"
+                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-size: 36px; font-weight: 300; line-height: 37px; padding: 40px 40px 0px 60px; border-top-left-radius: 10px; border-top-right-radius: 10px;"
+                                            >
+                                                <b> {{status}}</b>
+                                            </td>
+                                        </tr>
+                        
+                                        <tr>
+                                            <td align="middle" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 700; line-height: 26px; padding: 10px 50px 10px 60px;">
+                                                {{name}}
+                                            </td>
+                                        </tr>
+                        
+                                        <tr>
+                                            <td
+                                                align="middle"
+                                                class="raleway"
+                                                bgcolor="#ffffff"
+                                                valign="bottom"
+                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 21px; padding: 0px 60px 20px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;"
+                                            >
+                                                {{message|safe}}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        
+
+
+                        <!--Component details-->
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0">
+                            <tr>
+                                <td align="center">
+                                    <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0" style="width: 600px;" class="full-width">
+                                        <tr>
+                                            <td
+                                                align="middle"
+                                                class="raleway"
+                                                bgcolor="#ffffff"
+                                                valign="bottom"
+                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-size: 30px; font-weight: 300; line-height: 37px; padding: 40px 40px 20px 60px; border-top-left-radius: 10px; border-top-right-radius: 10px;"
+                                            >
+                                                <b>IMPLICATIONS</b>
+                                            </td>
+                                        </tr>
+                        
+                                        <tr>
+                                            <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 22px; padding: 0px 50px 20px 60px;">
+                                                The following Data Axle Platform functions will be affected:
+                                            </td>
+                                        </tr>
+                                        {% for data in component_data %}
+                        
+                                        <tr>
+                                            <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 24px; padding: 0px 50px 10px 60px;">
+                                                <span style="color: #27b14f !important;">&bull;</span>
+                                                &nbsp; {{data}}
+                                            </td>
+                                        </tr>
+                        
+                                        {% endfor %}
+                                        <tr>
+                                            <td
+                                                align="left"
+                                                class="raleway"
+                                                bgcolor="#ffffff"
+                                                valign="bottom"
+                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 24px; padding: 0px 50px 10px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;"
+                                            >
+                                                &nbsp;
+                                            </td>
+                                        </tr>
+                                        <br />
+                                        <br />
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        
+
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0" style="background-color:#efeff0;">
+                            <tr>
+                              <td height="30" style="font-size:30px; line-height:30px;">&nbsp;</td>
+                            </tr>
+                        </table>
+
+                        <!--from address details-->
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0">
+                            <tr>
+                              <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0" style="width:600px;" class="full-width">
+                  
+                                 <tr>
+                                    <td align="center" bgcolor="#ffffff" valign="top" style="padding: 40px 40px 0px 40px; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                                     
+                                    </td>
+                                  </tr> 
+                                  
+                                  <tr>
+                                    <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 22px; padding: 0px 50px 20px 60px;">
+                                        Sincerely,<br />
+                                        Yes Marketing Technical Operations <br>
+                                        Phone: <b>866-275-7678</b>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td align="middle" bgcolor="#ffffff" style="padding: 0px 0px 40px 0px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+                                      <table border="0" cellpadding="0" cellspacing="0"  style="margin:0 auto;">
+                                        <tr>
+                                          <td class="raleway hoverCTA" align="middle" bgcolor="#51B948"  style="border: 1px solid #000000; padding: 15px 40px 15px 40px; display: block; text-align: center; font-weight: 300; font-size: 18px; font-family:'Open Sans', Arial, Helvetica, sans-serif; color: #000000; background: #ffffff; border-radius: 50px; line-height:16px;">
+                                            <a href="mailto:toc@yesmarketing.com" target="_blank" style="color: #000000; font-weight: 700; text-decoration: none;">
+                                             Email Us
+                                            </a>
+                                          </td>
+                                        </tr>
+                                      </table>
+                                    </td>
+                                  </tr>
+                                 
+                                </table>
+                              </td>
+                            </tr>
+                        </table>
+
+
+                        <!-- Social Media Logos -->
+                        <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0">
+                            <tr>
+                            <td align="center" style="padding: 40px 0px 30px 0px;">
+                                <table align="center" cellpadding="0" cellspacing="0" border="0" width="250" style="width:250px;">
+                                <tr>
+                                    <td align="center" style="padding: 0px 0px 0px 0px"> 
+                                    <a href="https://www.facebook.com/yesmarketingus" target="_blank">
+                                    <img border="0" src="http://media.4at5.net/email_domains/webp/billa/ym-newsletter/sm-logos_12.jpg"  width="42" height="41" alt="" style="display:block"></a>
+                                    </td>
+                                    <td align="center" style="padding: 0px 0px 0px 0px"> 
+                                    <a href="https://twitter.com/yesmarketingus" target="_blank">
+                                    <img border="0" src="http://media.4at5.net/email_domains/webp/billa/ym-newsletter/sm-logos_14.jpg"  width="42" height="41" alt="" style="display:block"></a>
+                                    </td>
+                                    <td align="center" style="padding: 0px 0px 0px 0px"> 
+                                    <a href="https://www.linkedin.com/company/yes-marketingus" target="_blank">
+                                    <img border="0" src="http://media.4at5.net/email_domains/webp/billa/ym-newsletter/sm-logos_16.jpg"  width="42" height="41" alt="" style="display:block"></a>
+                                    </td>
+                                    
+                                    <td align="center" style="padding: 0px 0px 0px 0px"> 
+                                    <a href="https://www.yesmarketing.com/contact" target="_blank">
+                                    <img border="0" src="http://media.4at5.net/email_domains/webp/billa/ym-newsletter/sm-logos_18.jpg"  width="42" height="41" alt="" style="display:block"></a>
+                                    </td>
+                                </tr>
+                                </table>
+                            </td>
+                            </tr>
+                        </table>
+                        <!-- End Social Media Logos --> 
+
+                        <!-- Copyright -->
+                        <table align="center" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0">
+                            <tr>
+                                <td align="center" style="padding: 0px 0px 50px 0px;">
+                                    <table align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0">
+                                        <tr>
+                                            <td
+                                                align="center"
+                                                class="raleway"
+                                                style="text-align: center; font-weight: regular; font-size: 12px; font-family: 'Open Sans', Arial, Helvetica, sans-serif; color: #95989a; font-weight: 500; padding: 0px 20px 0px 0px;"
+                                            >
+                                                Copyright &copy; 2019 Yes Marketing
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td
+                                                align="center"
+                                                class="raleway"
+                                                style="text-align: center; font-weight: regular; font-size: 12px; font-family: 'Open Sans', Arial, Helvetica, sans-serif; font-weight: 500; color: #95989a; padding: 5px 20px 10px 0px;"
+                                            >
+                                                200 West Adams St., Suite 1400, Chicago Illinois 60606, United States <br />
+                                                <br />
+                                                Unsubscribe: Reply to this message with "unsubscribe" in the subject line to be removed from our database.
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <table align="center" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0">
+                                        <tr>
+                                            <td
+                                                align="center"
+                                                class="open"
+                                                style="
+                                                    text-align: center;
+                                                    font-weight: 700;
+                                                    font-size: 12px;
+                                                    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+                                                    color: #ffffff;
+                                                    border-right: solid 1px #95989a;
+                                                    padding: 0px 8px 0px 0px;
+                                                "
+                                            >
+                                                <a href="https://www.yesmarketing.com/privacy-policy" target="_blank" style="color: #95989a; text-decoration: none;"> Privacy Policy</a>
+                                            </td>
+
+                                            <td align="center" class="open" style="text-align: center; font-weight: 700; font-size: 12px; font-family: 'Open Sans', Arial, Helvetica, sans-serif; color: #ffffff; padding: 0px 0px 0px 8px;">
+                                                <a href="@HTML_PREVIEW_LINK&msgVersion=web" target="_blank" style="color: #95989a; text-decoration: none;"> Web View</a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+    </head>
+</html>

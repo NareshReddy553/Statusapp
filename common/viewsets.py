@@ -229,7 +229,7 @@ class IncidentsActivityViewset(viewsets.ModelViewSet):
             )
         queryset = self.get_queryset()
         l_queryset = queryset.filter(
-            incident_id=input_data.get('incident_id'))
+            incident_id=input_data.get('incident_id')).order_by("-modified_datetime")
         serializer = self.serializer_class(l_queryset, many=True)
         if serializer:
             return Response(serializer.data, status=status.HTTP_200_OK)

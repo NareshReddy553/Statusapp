@@ -185,11 +185,11 @@ class IncidentComponent(models.Model):
 
 
 class SubcriberComponent(models.Model):
-    subcriber_component_id = models.AutoField(
-        db_column='SUBCRIBER_COMPONENT_ID', primary_key=True)
+    subscriber_component_id = models.AutoField(
+        db_column='SUBSCRIBER_COMPONENT_ID', primary_key=True)
     # subcriber_id = models.IntegerField(db_column='SUBCRIBER_ID')
     subscriber = models.ForeignKey(
-        Subscribers, related_name="subscribers", on_delete=models.CASCADE)
+        Subscribers, related_name="compsubscribers", on_delete=models.CASCADE)
     # component_id = models.IntegerField(db_column='COMPONENT_ID')
     component = models.ForeignKey(
         Components, related_name="components", on_delete=models.CASCADE)

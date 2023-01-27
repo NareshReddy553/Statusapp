@@ -96,5 +96,5 @@ def Mytemplates(request):
     }
 
     subject = f"[Data Axle platform status updates] Incident {l_status} - Admin"
-    # return render(request, template_name='incident_email_notification.html', context=context,)
-    return render(request, template_name='start.html', context=context)
+    return render(request, template_name='incident_email_notification1.html', context=context,)
+    # return render(request, template_name='start.html', context=context)
