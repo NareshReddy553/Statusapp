@@ -1,13 +1,14 @@
 import datetime
-from django.forms import ValidationError
+
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 
-from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity
-from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer
+from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, Subscribers
+from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
 
@@ -175,7 +176,8 @@ class IncidentsViewset(viewsets.ModelViewSet):
         except Exception as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
-
+    
+        
 class ComponentsViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Components.objects.all()
@@ -236,3 +238,10 @@ class IncidentsActivityViewset(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class SubscribersViewset(viewsets.ModelViewSet):
+    serializer_class = SubscribersSerializer
+    queryset = Subscribers.objects.all()
+    

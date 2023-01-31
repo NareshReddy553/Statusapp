@@ -3,9 +3,11 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from account.services import get_cached_user
 from django.db import transaction
+from account.utils import get_hashed_password
 
 from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SubcriberComponent, IncidentsActivity, Subscribers
 from common.mailer import send_email
+from django.core.exceptions import ValidationError
 
 
 class BusinessUnitSerializer(serializers.ModelSerializer):
@@ -170,3 +172,47 @@ class IncidentsActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = IncidentsActivity
         fields = '__all__'
+
+
+class SubscribersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscribers
+        fields = '__all__'
+        
+        
+    @transaction.atomic
+    def create(self, validated_data):
+        l_businessunit_name = self.context['request'].headers.get(
+            'businessunit')
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        validated_data['businessunit'] = businessunit_qs
+        components_list = self.initial_data.get('components', None)
+        if components_list:
+            raise ValidationError("Please select atleast one component")
+        l_incident = super().create(validated_data)
+         
+        # Need entry in the subscriber component table which subscriber_id and component_id with respect to business_id
+        l_sub_com_obj = [SubcriberComponent(
+            subscriber_id=l_incident.pk,
+            component_id=cmp_sts,
+            is_active=True,
+            businessunit=businessunit_qs
+        ) for cmp_sts in components_list]
+        if l_sub_com_obj:
+           inc_cmp_obj = SubcriberComponent.objects.bulk_create(l_sub_com_obj) 
+        #    Need to send the conformation mail
+        subscriber_Hash=l_incident.subscriber_hash
+        subscribers_email=[l_incident.email]
+        if subscribers_email:
+            context = {
+                "subscriber": l_incident
+            }
+            x = datetime.now().strftime("%x %I:%M %p")
+            subject = f"[Data Axle platform status updates] Welcome to Data Axle platform status application"
+            # send_email(
+            #     template="subscriber_email_notification.html",
+            #     subject=subject,
+            #     context_data=context,
+            #     recipient_list=subscribers_email,
+            # )

@@ -1,3 +1,5 @@
+import datetime
+from dateutil.relativedelta import relativedelta
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -7,6 +9,7 @@ from account.permissions import IsBusinessUnitUser
 
 from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, UserBusinessunits
 from account.permissions import BaseStAppPermission
+from common.serializers import IncidentSerializer
 from common.utils import component_group_order, get_components_all_list
 
 # Create your views here.
@@ -34,6 +37,18 @@ def get_businessunits(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_components_list(request):
+    """ 
+        This API is to get the list of components based on the businessunit,display order and group number
+    """
+    queryset = Components.objects.select_related().filter(
+        businessunit__businessunit_name=request.headers.get('businessunit'), businessunit__is_active=True)
+    finaldata_list = get_components_all_list(queryset)
+
+    return Response(finaldata_list, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+def get_statuspage_components_list(request):
     """ 
         This API is to get the list of components based on the businessunit,display order and group number
     """
@@ -82,6 +97,28 @@ def get_dashboard_incident_component_status(request):
     return Response(component_status_incident, status=status.HTTP_200_OK)
 
 
+
+@api_view(["GET"])
+def get_status_page_incidents(request):
+    """
+        This api is used to get the all the incident with in the time period of 3 months
+    """
+    start_date=datetime.datetime.now()
+    end_date=start_date-relativedelta(months=3)
+    l_businessunit =request.headers.get('businessunit')
+    queryset = Incidents.objects.filter(
+        businessunit__businessunit_name=l_businessunit, is_active=True, isdeleted=False,modify_datetime__gte=end_date)
+
+    serializer=IncidentSerializer(queryset,many=True)
+    if serializer:
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+
 def Mytemplates(request):
     l_incident = Incidents.objects.first()
     components_effected = ['adobe', 'import', 'export', 'yesmail marketing']
@@ -96,5 +133,5 @@ def Mytemplates(request):
     }
 
     subject = f"[Data Axle platform status updates] Incident {l_status} - Admin"
-    return render(request, template_name='incident_email_notification1.html', context=context,)
+    return render(request, template_name='subscriber_email_notification.html', context=context,)
     # return render(request, template_name='start.html', context=context)

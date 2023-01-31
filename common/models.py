@@ -5,13 +5,20 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-from django.db import models
+import base64
+import hashlib
+import uuid
+from django.conf import settings
+from django.db import IntegrityError, models
 
 from account.account_models import Users
+from account.utils import get_hashed_password
 from common.softdelete.managers import SoftDeleteManger
 from common.softdelete.models import SoftDeleteModelMixin
 from common.softdelete.querysets import SoftDeletionQuerySet
+from common.exceptions import DuplicateUsernameError
 
+DUPLICATE_USERNAME_ERROR = "Duplicate Username Error"
 
 class Businessunits(models.Model):
     businessunit_id = models.AutoField(
@@ -140,8 +147,18 @@ class Incidents(SoftDeleteModelMixin):
 
 
 class Subscribers(models.Model):
+    
+    
+
     subscriber_id = models.AutoField(
         db_column='SUBSCRIBER_ID', primary_key=True)
+    def _get_hashed_password(self):
+        m = hashlib.sha256()
+        m.update(settings.PASSWORD_SALT)
+        m.update(self.subscriber_id.encode('utf-8'))
+        hash = m.digest()
+        pwdHash = base64.b64encode(hash).decode('utf-8')
+        return pwdHash
     first_name = models.CharField(db_column='FIRST_NAME', max_length=200)
     last_name = models.CharField(
         db_column='LAST_NAME', max_length=200, blank=True, null=True)
@@ -149,17 +166,27 @@ class Subscribers(models.Model):
     phone_number = models.BigIntegerField(
         db_column='PHONE_NUMBER', unique=True, blank=True, null=True)
     is_active = models.BooleanField(db_column='IS_ACTIVE')
-    email_delivery = models.IntegerField(
+    email_delivery = models.BooleanField(
         db_column='EMAIL_DELIVERY', blank=True, null=True)
-    sms_delivery = models.IntegerField(db_column='SMS_DELIVERY')
+    sms_delivery = models.BooleanField(db_column='SMS_DELIVERY')
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='subscribers_bs')
-    created_datetime = models.DateTimeField(db_column='CREATED_DATETIME')
-    modify_datetime = models.DateTimeField(db_column='MODIFY_DATETIME')
+    created_datetime = models.DateTimeField(db_column='CREATED_DATETIME',auto_now_add=True)
+    modify_datetime = models.DateTimeField(db_column='MODIFY_DATETIME',auto_now=True)
+    subscriber_token=models.CharField(db_column='SUBSCRIBER_TOKEN',max_length=100,default=_get_hashed_password,editable=False)
 
     class Meta:
         managed = False
         db_table = 'subscribers'
+    def save(self, *args, **kwargs):
+        try:
+            super(Subscribers, self).save(*args, **kwargs)
+        except IntegrityError as e:
+            raise DuplicateUsernameError(
+                "This username is already exist.Please provide unique Username",
+                DUPLICATE_USERNAME_ERROR,
+                {"username": self.username},
+            )
 
 
 class IncidentComponent(models.Model):
@@ -196,8 +223,8 @@ class SubcriberComponent(models.Model):
     is_active = models.BooleanField(db_column='IS_ACTIVE')
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='sub_com_bs')
-    created_datetime = models.DateTimeField(db_column='CREATED_DATETIME')
-    modify_datetime = models.DateTimeField(db_column='MODIFY_DATETIME')
+    created_datetime = models.DateTimeField(db_column='CREATED_DATETIME',auto_now_add=True)
+    modify_datetime = models.DateTimeField(db_column='MODIFY_DATETIME',auto_now=True)
 
     class Meta:
         managed = False
