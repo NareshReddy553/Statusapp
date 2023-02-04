@@ -147,33 +147,23 @@ class Incidents(SoftDeleteModelMixin):
 
 
 class Subscribers(models.Model):
-    
-    
-
     subscriber_id = models.AutoField(
         db_column='SUBSCRIBER_ID', primary_key=True)
-    def _get_hashed_password(self):
-        m = hashlib.sha256()
-        m.update(settings.PASSWORD_SALT)
-        m.update(self.subscriber_id.encode('utf-8'))
-        hash = m.digest()
-        pwdHash = base64.b64encode(hash).decode('utf-8')
-        return pwdHash
-    first_name = models.CharField(db_column='FIRST_NAME', max_length=200)
+    first_name = models.CharField(db_column='FIRST_NAME', max_length=200,blank=True,null=True)
     last_name = models.CharField(
         db_column='LAST_NAME', max_length=200, blank=True, null=True)
-    email = models.CharField(db_column='EMAIL', unique=True, max_length=500)
-    phone_number = models.BigIntegerField(
-        db_column='PHONE_NUMBER', unique=True, blank=True, null=True)
-    is_active = models.BooleanField(db_column='IS_ACTIVE')
+    email = models.EmailField(db_column='EMAIL', unique=True, max_length=500,blank=True, null=True)
+    phone_number = models.CharField(
+        db_column='PHONE_NUMBER', unique=True, blank=True, null=True,max_length=10)
+    is_active = models.BooleanField(db_column='IS_ACTIVE',default=True)
     email_delivery = models.BooleanField(
-        db_column='EMAIL_DELIVERY', blank=True, null=True)
-    sms_delivery = models.BooleanField(db_column='SMS_DELIVERY')
+        db_column='EMAIL_DELIVERY', blank=True, null=True,default=False)
+    sms_delivery = models.BooleanField(db_column='SMS_DELIVERY',default=False)
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='subscribers_bs')
     created_datetime = models.DateTimeField(db_column='CREATED_DATETIME',auto_now_add=True)
     modify_datetime = models.DateTimeField(db_column='MODIFY_DATETIME',auto_now=True)
-    subscriber_token=models.CharField(db_column='SUBSCRIBER_TOKEN',max_length=100,default=_get_hashed_password,editable=False)
+    subscriber_token=models.CharField(db_column='SUBSCRIBER_TOKEN',max_length=100,editable=False)
 
     class Meta:
         managed = False
@@ -183,9 +173,9 @@ class Subscribers(models.Model):
             super(Subscribers, self).save(*args, **kwargs)
         except IntegrityError as e:
             raise DuplicateUsernameError(
-                "This username is already exist.Please provide unique Username",
+                "This Email is already exist.Please provide unique Email",
                 DUPLICATE_USERNAME_ERROR,
-                {"username": self.username},
+                {"email": self.email},
             )
 
 
@@ -306,3 +296,12 @@ class IncidentsActivity(models.Model):
     class Meta:
         managed = False
         db_table = 'incidents_activity'
+
+class Smsgateway(models.Model):
+    network_id = models.AutoField(db_column='NETWORK_ID', primary_key=True)
+    network = models.CharField(db_column='NETWORK', unique=True, max_length=100)
+    pemail = models.CharField(db_column='PEMAIL', max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'smsgateway'

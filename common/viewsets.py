@@ -6,11 +6,13 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
+from account.utils import get_hashed_password
 
-from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, Subscribers
+from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, Smsgateway, SubcriberComponent, Subscribers
 from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
+from django.db import transaction
 
 
 class IncidentsViewset(viewsets.ModelViewSet):
@@ -245,3 +247,14 @@ class SubscribersViewset(viewsets.ModelViewSet):
     serializer_class = SubscribersSerializer
     queryset = Subscribers.objects.all()
     
+    @action(detail=False, methods=["post"], url_path="create_subscriber")
+    def create_subsciber_on_businessunit(self, request, pk=None):
+        serializer = self.serializer_class(
+            data=request.data,context={"businessunit":self.request.headers.get('businessunit')}
+        )
+        if serializer.is_valid(raise_exception=True):
+            l_serializer = serializer.create(serializer.validated_data)
+            if l_serializer:
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response( status=status.HTTP_400_BAD_REQUEST)   

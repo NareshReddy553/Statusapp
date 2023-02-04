@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from account.permissions import IsBusinessUnitUser
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, UserBusinessunits
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, UserBusinessunits
 from account.permissions import BaseStAppPermission
 from common.serializers import IncidentSerializer
 from common.utils import component_group_order, get_components_all_list
@@ -117,6 +117,11 @@ def get_status_page_incidents(request):
                         status=status.HTTP_400_BAD_REQUEST)
         
 
+
+@api_view(["GET"])
+def get_network_lists(request):
+    network_list=Smsgateway.objects.values_list('network',flat=True)
+    return Response(network_list,status=status.HTTP_200_OK)
 
 
 def Mytemplates(request):

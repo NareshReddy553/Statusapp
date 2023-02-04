@@ -5,7 +5,7 @@ from account.services import get_cached_user
 from django.db import transaction
 from account.utils import get_hashed_password
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SubcriberComponent, IncidentsActivity, Subscribers
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
 from common.mailer import send_email
 from django.core.exceptions import ValidationError
 
@@ -175,6 +175,7 @@ class IncidentsActivitySerializer(serializers.ModelSerializer):
 
 
 class SubscribersSerializer(serializers.ModelSerializer):
+    businessunit = BusinessUnitSerializer(required=False)
     class Meta:
         model = Subscribers
         fields = '__all__'
@@ -182,19 +183,33 @@ class SubscribersSerializer(serializers.ModelSerializer):
         
     @transaction.atomic
     def create(self, validated_data):
-        l_businessunit_name = self.context['request'].headers.get(
-            'businessunit')
+        l_businessunit_name = self.context['businessunit']
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True).first()
         validated_data['businessunit'] = businessunit_qs
         components_list = self.initial_data.get('components', None)
-        if components_list:
+        if not components_list:
             raise ValidationError("Please select atleast one component")
-        l_incident = super().create(validated_data)
+        
+        if self.initial_data.get('email_delivery', None):
+            validated_data['email_delivery']=True
+            
+        elif self.initial_data.get('sms_delivery', None):
+            l_network=self.initial_data.get('network', None)
+            if l_network:
+                l_network_mail=Smsgateway.objects.get(network=l_network).pemail
+                if l_network_mail:
+                    validated_data['email']=validated_data['phone_number']+"@"+l_network_mail
+                    validated_data['sms_delivery']=True
+                    
+        else:
+            raise ValidationError("subscriber type is required in payload")
+        validated_data['subscriber_token']=get_hashed_password(validated_data['email'])
+        instance = super().create(validated_data)
          
         # Need entry in the subscriber component table which subscriber_id and component_id with respect to business_id
         l_sub_com_obj = [SubcriberComponent(
-            subscriber_id=l_incident.pk,
+            subscriber_id=instance.pk,
             component_id=cmp_sts,
             is_active=True,
             businessunit=businessunit_qs
@@ -202,11 +217,11 @@ class SubscribersSerializer(serializers.ModelSerializer):
         if l_sub_com_obj:
            inc_cmp_obj = SubcriberComponent.objects.bulk_create(l_sub_com_obj) 
         #    Need to send the conformation mail
-        subscriber_Hash=l_incident.subscriber_hash
-        subscribers_email=[l_incident.email]
+        subscriber_Hash=instance.subscriber_token
+        subscribers_email=[instance.email]
         if subscribers_email:
             context = {
-                "subscriber": l_incident
+                "subscriber": instance
             }
             x = datetime.now().strftime("%x %I:%M %p")
             subject = f"[Data Axle platform status updates] Welcome to Data Axle platform status application"
@@ -216,3 +231,4 @@ class SubscribersSerializer(serializers.ModelSerializer):
             #     context_data=context,
             #     recipient_list=subscribers_email,
             # )
+        return instance
