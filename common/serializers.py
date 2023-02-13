@@ -189,7 +189,7 @@ class SubscribersSerializer(serializers.ModelSerializer):
         validated_data['businessunit'] = businessunit_qs
         components_list = self.initial_data.get('components', None)
         if not components_list:
-            raise ValidationError("Please select atleast one component")
+            raise ValidationError({"Error":"Please select atleast one component"})
         
         if self.initial_data.get('email_delivery', None):
             validated_data['email_delivery']=True
