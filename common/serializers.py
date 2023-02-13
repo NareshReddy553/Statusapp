@@ -7,7 +7,7 @@ from account.utils import get_hashed_password
 
 from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
 from common.mailer import send_email
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 
 
 class BusinessUnitSerializer(serializers.ModelSerializer):
