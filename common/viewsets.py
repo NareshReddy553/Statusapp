@@ -302,26 +302,29 @@ class ComponentsViewset(viewsets.ModelViewSet):
                                     status=status.HTTP_400_BAD_REQUEST)
             else:
                 # Update the sub group component
-                group_component_qs=Components.objects.get(pk=input_data.get('component_group'))
-                if group_component_qs:
-                    input_data["is_group"]=False
-                    input_data["group_no"]=group_component_qs.group_no
-                    input_data["display_order"]=group_component_qs.display_order
-                    input_data["subgroup_display_order"]=Components.objects.filter(group_no=group_component_qs.group_no,businessunit=businessunit_qs).aggregate(Max("subgroup_display_order")).get('subgroup_display_order__max')+1
-                    input_data["modifieduser"]=request.user.pk
-                    input_data["has_subgroup"]=False            
+                if input_data.get('component_group'):
+                    
+                    group_component_qs=Components.objects.get(pk=input_data.get('component_group'))
+                    if group_component_qs:
+                        input_data["is_group"]=False
+                        input_data["group_no"]=group_component_qs.group_no
+                        input_data["display_order"]=group_component_qs.display_order
+                        input_data["subgroup_display_order"]=Components.objects.filter(group_no=group_component_qs.group_no,businessunit=businessunit_qs).aggregate(Max("subgroup_display_order")).get('subgroup_display_order__max')+1
+                        input_data["has_subgroup"]=False            
+                input_data["modifieduser"]=request.user.pk
                 serializer = self.serializer_class(l_component,data=input_data,partial=True)
                 if serializer.is_valid():
                     # while updating the component if group component is changes then we need to look at the current updating component 
                     # which is under sub group and if the sub group is has only one sub component then we need to update  sub group to component
-                    l_component_count=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).count()
-                    if l_component_count and l_component_count<=2:
-                        group_component=Components.objects.filter(group_no=l_component.group_no,is_group=True,has_subgroup=True,businessunit=businessunit_qs).first()
-                        if group_component:
-                            group_component.subgroup_display_order=1
-                            group_component.modifieduser=request.user
-                            group_component.has_subgroup=False
-                            group_component.save()
+                    if input_data.get('component_group'):
+                        l_component_count=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).count()
+                        if l_component_count and l_component_count<=2:
+                            group_component=Components.objects.filter(group_no=l_component.group_no,is_group=True,has_subgroup=True,businessunit=businessunit_qs).first()
+                            if group_component:
+                                group_component.subgroup_display_order=1
+                                group_component.modifieduser=request.user
+                                group_component.has_subgroup=False
+                                group_component.save()
                     serializer.save()
                     return Response(status=status.HTTP_200_OK)
                 else:
