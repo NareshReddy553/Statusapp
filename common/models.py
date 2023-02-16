@@ -18,7 +18,7 @@ from common.softdelete.models import SoftDeleteModelMixin
 from common.softdelete.querysets import SoftDeletionQuerySet
 from common.exceptions import DuplicateUsernameError
 
-DUPLICATE_USERNAME_ERROR = "Duplicate Username Error"
+DUPLICATE_USERNAME_ERROR = "Duplicate Email Error"
 
 class Businessunits(models.Model):
     businessunit_id = models.AutoField(
@@ -69,8 +69,8 @@ class Components(models.Model):
     component_id = models.AutoField(db_column='COMPONENT_ID', primary_key=True)
     component_name = models.CharField(
         db_column='COMPONENT_NAME', max_length=500)
-    decscription = models.CharField(
-        db_column='DECSCRIPTION', max_length=12000, blank=True, null=True)
+    description = models.CharField(
+        db_column='DESCRIPTION', max_length=12000, blank=True, null=True)
     is_active = models.BooleanField(db_column='IS_ACTIVE', default=True)
     is_group = models.BooleanField(db_column='IS_GROUP')
     group_no = models.IntegerField(db_column='GROUP_NO')
@@ -79,8 +79,8 @@ class Components(models.Model):
         db_column='SUBGROUP_DISPLAY_ORDER')
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='component_bs')
-    created_datetime = models.DateTimeField(db_column='CREATED_DATETIME')
-    modified_datetime = models.DateTimeField(db_column='MODIFIED_DATETIME')
+    created_datetime = models.DateTimeField(db_column='CREATED_DATETIME',auto_now_add=True)
+    modified_datetime = models.DateTimeField(db_column='MODIFIED_DATETIME',auto_now=True)
     # createduser_id = models.IntegerField(db_column='CREATEDUSER_ID')
     # modifieduser_id = models.IntegerField(db_column='MODIFIEDUSER_ID')
     createduser = models.ForeignKey(

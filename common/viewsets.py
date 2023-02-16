@@ -7,8 +7,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from account.utils import get_hashed_password
+from django.db.models import Q
+from django.db.models import Max
 
-from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, Smsgateway, SubcriberComponent, Subscribers
+from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
 from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
@@ -186,32 +188,182 @@ class ComponentsViewset(viewsets.ModelViewSet):
     serializer_class = ComponentsSerializer
     # filter_backends = [DjangoFilterBackend]
     # filterset_fields = {"component_name": {'in'}}
+    def get_queryset(self):
+        l_businessunit = self.request.headers.get('businessunit')
+        queryset = Components.objects.filter(
+            businessunit__businessunit_name=l_businessunit, is_active=True)
+        return queryset 
+        
 
-    # def get_queryset(self):
-    #     # project_id may be None
-    #     print(self.request.GET.get('businessunit'))
-    #     print(self.request.GET.getlist('businessunit'))
-    #     return self.queryset \
-    #         .filter(businessunit__businessunit_name__in=self.request.GET.get('businessunit'))
+    @action(detail=False, methods=["post"], url_path="create_component")
+    def create_component(self, request, pk=None):
+        input_data=request.data
+        l_businessunit_name = request.headers.get(
+            'businessunit')
+        user = request.user
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        #check for component and  grouptype
+        if not input_data.get('component_name'):
+            raise ValidationError({"Error":"Please provide component name"})
+        component_create=[]
+        if input_data.get('component_name') :
+            cmp_orders=Components.objects.filter(businessunit=businessunit_qs).aggregate(Max('group_no'),Max('display_order'))
+            l_ComponentsStatus=ComponentsStatus.objects.filter(component_status_name='Operational').first()
+            if input_data.get('new_group_name'):
+                new_group_name=input_data.get('new_group_name')
+                # new group component  creation
+                component_create.append(Components(component_name=new_group_name,
+                                                   description="",
+                                                   is_group=True,
+                                                   group_no=int(cmp_orders['group_no__max'])+1,
+                                                   display_order=int(cmp_orders['display_order__max'])+1,
+                                                   subgroup_display_order=0,
+                                                   businessunit=businessunit_qs,
+                                                   createduser=user,
+                                                   modifieduser=user,
+                                                   has_subgroup=True,
+                                                   component_status=l_ComponentsStatus
+                                                   ))
+                # new component creation from the new group component
+                component_create.append(Components(component_name=input_data.get('component_name'),
+                                                   description=input_data.get('description'),
+                                                   is_group=False,
+                                                   group_no=cmp_orders['group_no__max']+1,
+                                                   display_order=cmp_orders['display_order__max']+1,
+                                                   subgroup_display_order=1,
+                                                   businessunit=businessunit_qs,
+                                                   createduser=user,
+                                                   modifieduser=user,
+                                                   has_subgroup=False,
+                                                   component_status=l_ComponentsStatus
+                                                   ))
 
-    @action(detail=True, methods=["put"], url_path="update_incident")
-    def update_incident(self, request, pk=None):
-        input_data = request.data
-        l_incident = self.get_object()
-        serializer = self.serializer_class(data=input_data)
-        if serializer.is_valid():
-            l_incident.save()
-            return Response(status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["delete"], url_path="delete_incident")
-    def delete_incident(self, request, pk=None):
-        input_data = request.data
-        l_incident = self.get_object()
+            elif input_data.get('group_component'):
+                component_obj=Components.objects.get(pk=input_data.get('group_component'))
+                l_subgroup_display_order=Components.objects.filter(group_no=component_obj.group_no,businessunit=businessunit_qs).aggregate(Max("subgroup_display_order"))
+                component_create.append(Components(component_name=input_data.get('component_name'),
+                                                   description=input_data.get('description'),
+                                                   is_group=False,
+                                                   group_no=component_obj.group_no,
+                                                   display_order=component_obj.display_order,
+                                                   subgroup_display_order=l_subgroup_display_order['subgroup_display_order__max']+1,
+                                                   businessunit=businessunit_qs,
+                                                   createduser=user,
+                                                   modifieduser=user,
+                                                   has_subgroup=False,
+                                                   component_status=l_ComponentsStatus
+                                                   ))
+            else:
+                
+                component_create.append(Components(component_name=input_data.get('component_name'),
+                                                   description=input_data.get('description'),
+                                                   is_group=True,
+                                                   group_no=cmp_orders['group_no__max']+1,
+                                                   display_order=cmp_orders['display_order__max']+1,
+                                                   subgroup_display_order=1,
+                                                   businessunit=businessunit_qs,
+                                                   createduser=user,
+                                                   modifieduser=user,
+                                                   has_subgroup=False,
+                                                   component_status=l_ComponentsStatus
+                                                   ))
         try:
-            deleted_obj = l_incident.delete()
+            if component_create:
+                Components.objects.bulk_create(
+                    component_create)
+                return Response(status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)   
+
+            
+        
+
+    @action(detail=True, methods=["patch"], url_path="update_component")
+    def update_component(self, request, pk=None):
+        input_data = request.data
+        l_component = self.get_object()
+        l_businessunit_name = request.headers.get(
+            'businessunit')
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        try:
+            if not l_component:
+                raise ValidationError({"Error":"component not found in database please provide valid component id"})
+            if l_component.is_group and l_component.has_subgroup:
+                # Update the group component
+                input_data["modifieduser"]=request.user.pk
+                serializer = self.serializer_class(l_component,data=input_data,partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # Update the sub group component
+                group_component_qs=Components.objects.get(pk=input_data.get('component_group'))
+                if group_component_qs:
+                    input_data["is_group"]=False
+                    input_data["group_no"]=group_component_qs.group_no
+                    input_data["display_order"]=group_component_qs.display_order
+                    input_data["subgroup_display_order"]=Components.objects.filter(group_no=group_component_qs.group_no,businessunit=businessunit_qs).aggregate(Max("subgroup_display_order")).get('subgroup_display_order__max')+1
+                    input_data["modifieduser"]=request.user.pk
+                    input_data["has_subgroup"]=False            
+                serializer = self.serializer_class(l_component,data=input_data,partial=True)
+                if serializer.is_valid():
+                    # while updating the component if group component is changes then we need to look at the current updating component 
+                    # which is under sub group and if the sub group is has only one sub component then we need to update  sub group to component
+                    l_component_count=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).count()
+                    if l_component_count and l_component_count<=2:
+                        group_component=Components.objects.filter(group_no=l_component.group_no,is_group=True,has_subgroup=True,businessunit=businessunit_qs).first()
+                        if group_component:
+                            group_component.subgroup_display_order=1
+                            group_component.modifieduser=request.user
+                            group_component.has_subgroup=False
+                            group_component.save()
+                    serializer.save()
+                    return Response(status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(detail=True, methods=["delete"], url_path="delete_component")
+    def delete_component(self, request, pk=None):
+        user=request.user
+        l_component= self.get_object()
+        l_businessunit_name = request.headers.get(
+            'businessunit')
+        user = request.user
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        try:
+            # check deleting object is group component or sub group component
+            if l_component.is_group and l_component.has_subgroup:
+                # if group component then we need to update the sub group componet which are belong to this group component as independent components
+                sub_components_qs=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).filter(~Q(component_id=l_component.pk))
+                if sub_components_qs:
+                    counter=1
+                    for qs in sub_components_qs:
+                        
+                        cmp_orders=Components.objects.filter(businessunit=businessunit_qs).aggregate(Max('group_no'),Max('display_order'))
+                        if counter==1:
+                            l_group=cmp_orders['group_no__max']
+                            l_display_order=cmp_orders['display_order__max']
+                        else:
+                            l_group=int(cmp_orders['group_no__max'])+1
+                            l_display_order=int(cmp_orders['display_order__max'])+1
+                        # Update sub components
+                        qs.is_group=1
+                        qs.group_no=l_group
+                        qs.display_order=l_display_order
+                        qs.modifieduser=user
+                        qs.subgroup_display_order=0,
+                        qs.save()
+                        counter+=1
+            deleted_obj = l_component.delete()
             return Response(deleted_obj, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_400_BAD_REQUEST)
