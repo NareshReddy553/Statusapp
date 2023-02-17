@@ -182,6 +182,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
 
     
         
+        
 class ComponentsViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Components.objects.all()
@@ -194,7 +195,14 @@ class ComponentsViewset(viewsets.ModelViewSet):
             businessunit__businessunit_name=l_businessunit, is_active=True)
         return queryset 
         
-
+    @action(detail=False, methods=["get"], url_path="group_components")
+    def group_component(self, request, pk=None):
+        queryset=self.get_queryset()
+        queryset=queryset.filter(has_subgroup=True,is_group=True)
+        serializer=self.serializer_class(queryset,many=True)
+        if serializer.data:
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        
     @action(detail=False, methods=["post"], url_path="create_component")
     def create_component(self, request, pk=None):
         input_data=request.data
