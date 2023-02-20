@@ -1,6 +1,6 @@
 import datetime
 
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -247,8 +247,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
                                                    component_status=l_ComponentsStatus
                                                    ))
 
-            elif input_data.get('group_component'):
-                component_obj=Components.objects.get(pk=input_data.get('group_component'))
+            elif input_data.get('component_group'):
+                component_obj=Components.objects.get(pk=input_data.get('component_group'))
                 l_subgroup_display_order=Components.objects.filter(group_no=component_obj.group_no,businessunit=businessunit_qs).aggregate(Max("subgroup_display_order"))
                 component_create.append(Components(component_name=input_data.get('component_name'),
                                                    description=input_data.get('description'),
@@ -296,6 +296,7 @@ class ComponentsViewset(viewsets.ModelViewSet):
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True).first()
         try:
+            cmp_orders=Components.objects.filter(businessunit=businessunit_qs).aggregate(Max('group_no'),Max('display_order'))
             if not l_component:
                 raise ValidationError({"Error":"component not found in database please provide valid component id"})
             if l_component.is_group and l_component.has_subgroup:
@@ -318,13 +319,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
                         input_data["group_no"]=group_component_qs.group_no
                         input_data["display_order"]=group_component_qs.display_order
                         input_data["subgroup_display_order"]=Components.objects.filter(group_no=group_component_qs.group_no,businessunit=businessunit_qs).aggregate(Max("subgroup_display_order")).get('subgroup_display_order__max')+1
-                        input_data["has_subgroup"]=False            
-                input_data["modifieduser"]=request.user.pk
-                serializer = self.serializer_class(l_component,data=input_data,partial=True)
-                if serializer.is_valid():
-                    # while updating the component if group component is changes then we need to look at the current updating component 
-                    # which is under sub group and if the sub group is has only one sub component then we need to update  sub group to component
-                    if input_data.get('component_group'):
+                        input_data["has_subgroup"]=False 
+                        
                         l_component_count=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).count()
                         if l_component_count and l_component_count<=2:
                             group_component=Components.objects.filter(group_no=l_component.group_no,is_group=True,has_subgroup=True,businessunit=businessunit_qs).first()
@@ -333,6 +329,65 @@ class ComponentsViewset(viewsets.ModelViewSet):
                                 group_component.modifieduser=request.user
                                 group_component.has_subgroup=False
                                 group_component.save()
+                              
+                elif input_data.get('new_group_name'):
+                    new_group_name=input_data.get('new_group_name')
+                    # new group component  creation
+                    
+                    l_ComponentsStatus=ComponentsStatus.objects.filter(component_status_name='Operational').first()
+                    new_group=Components.objects.create(component_name=new_group_name,
+                                                   description="",
+                                                   is_group=True,
+                                                   group_no=int(cmp_orders['group_no__max'])+1,
+                                                   display_order=int(cmp_orders['display_order__max'])+1,
+                                                   subgroup_display_order=0,
+                                                   businessunit=businessunit_qs,
+                                                   createduser=request.user,
+                                                   modifieduser=request.user,
+                                                   has_subgroup=True,
+                                                   component_status=l_ComponentsStatus
+                                                   )
+                    if new_group:
+                        if input_data.get('component_name'):
+                            input_data["component_name"]=input_data.get('component_name')
+                        if input_data.get('description'):
+                            input_data["description"]=input_data.get('description')
+                    input_data["is_group"]=False
+                    input_data["group_no"]=cmp_orders['group_no__max']+1
+                    input_data["display_order"]=cmp_orders['display_order__max']+1
+                    input_data["subgroup_display_order"]=1
+                    
+                    l_component_count=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).count()
+                    if l_component_count and l_component_count<=2:
+                        group_component=Components.objects.filter(group_no=l_component.group_no,is_group=True,has_subgroup=True,businessunit=businessunit_qs).first()
+                        if group_component:
+                            group_component.subgroup_display_order=1
+                            group_component.modifieduser=request.user
+                            group_component.has_subgroup=False
+                            group_component.save()
+                    
+                else:
+                    input_data["is_group"]=True
+                    input_data["group_no"]=cmp_orders['group_no__max']+1
+                    input_data["display_order"]=cmp_orders['display_order__max']+1
+                    input_data["subgroup_display_order"]=0
+                    input_data["has_subgroup"]=False
+                    
+                    l_component_count=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).count()
+                    if l_component_count and l_component_count<=2:
+                        group_component=Components.objects.filter(group_no=l_component.group_no,is_group=True,has_subgroup=True,businessunit=businessunit_qs).first()
+                        if group_component:
+                            group_component.subgroup_display_order=1
+                            group_component.modifieduser=request.user
+                            group_component.has_subgroup=False
+                            group_component.save()
+                    
+                input_data["modifieduser"]=request.user.pk
+                serializer = self.serializer_class(l_component,data=input_data,partial=True)
+                if serializer.is_valid():
+                    # while updating the component if group component is changes then we need to look at the current updating component 
+                    # which is under sub group and if the sub group is has only one sub component then we need to update  sub group to component
+                   
                     serializer.save()
                     return Response(status=status.HTTP_200_OK)
                 else:
@@ -356,24 +411,19 @@ class ComponentsViewset(viewsets.ModelViewSet):
                 # if group component then we need to update the sub group componet which are belong to this group component as independent components
                 sub_components_qs=Components.objects.filter(group_no=l_component.group_no,businessunit=businessunit_qs).filter(~Q(component_id=l_component.pk))
                 if sub_components_qs:
-                    counter=1
                     for qs in sub_components_qs:
                         
                         cmp_orders=Components.objects.filter(businessunit=businessunit_qs).aggregate(Max('group_no'),Max('display_order'))
-                        if counter==1:
-                            l_group=cmp_orders['group_no__max']
-                            l_display_order=cmp_orders['display_order__max']
-                        else:
-                            l_group=int(cmp_orders['group_no__max'])+1
-                            l_display_order=int(cmp_orders['display_order__max'])+1
+                        
+                        l_group=int(cmp_orders['group_no__max'])+1
+                        l_display_order=int(cmp_orders['display_order__max'])+1
                         # Update sub components
                         qs.is_group=1
                         qs.group_no=l_group
                         qs.display_order=l_display_order
                         qs.modifieduser=user
-                        qs.subgroup_display_order=0,
+                        qs.subgroup_display_order=0
                         qs.save()
-                        counter+=1
             deleted_obj = l_component.delete()
             return Response(deleted_obj, status=status.HTTP_200_OK)
         except Exception as e:
