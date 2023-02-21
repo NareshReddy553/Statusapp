@@ -197,11 +197,13 @@ class ComponentsViewset(viewsets.ModelViewSet):
         
     @action(detail=False, methods=["get"], url_path="group_components")
     def group_component(self, request, pk=None):
+        group_components=[]
         queryset=self.get_queryset()
         queryset=queryset.filter(has_subgroup=True,is_group=True)
         serializer=self.serializer_class(queryset,many=True)
         if serializer.data:
-            return Response(serializer.data,status=status.HTTP_200_OK)
+            group_components=serializer.data
+        return Response(group_components,status=status.HTTP_200_OK)
         
     @action(detail=False, methods=["post"], url_path="create_component")
     def create_component(self, request, pk=None):
@@ -460,6 +462,12 @@ class SubscribersViewset(viewsets.ModelViewSet):
     serializer_class = SubscribersSerializer
     queryset = Subscribers.objects.all()
     
+    def get_queryset(self):
+        l_businessunit = self.request.headers.get('businessunit')
+        queryset = Subscribers.objects.filter(
+            businessunit__businessunit_name=l_businessunit, is_active=True)
+        return queryset
+    
     @action(detail=False, methods=["post"], url_path="create_subscriber")
     def create_subsciber_on_businessunit(self, request, pk=None):
         serializer = self.serializer_class(
@@ -471,3 +479,23 @@ class SubscribersViewset(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_200_OK)
             else:
                 return Response( status=status.HTTP_400_BAD_REQUEST)   
+    
+    @action(detail=False, methods=["put"], url_path="subscriberslist")
+    def get_subscribers(self, request, pk=None):
+        inputdata=request.data
+        queryset=self.get_queryset()
+        if inputdata.get('email_delivery'):
+            queryset=queryset.filter(email_delivery=inputdata['email_delivery'],is_active=True)
+        elif inputdata.get('sms_delivery'):
+            queryset=queryset.filter(sms_delivery=inputdata['sms_delivery'],is_active=True)
+        else:
+            raise ValidationError({"Error":"Subscriber type is required in payload"})
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data=self.get_paginated_response(serializer.data)
+            return data
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+        
