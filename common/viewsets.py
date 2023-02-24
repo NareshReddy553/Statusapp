@@ -480,7 +480,7 @@ class SubscribersViewset(viewsets.ModelViewSet):
             else:
                 return Response( status=status.HTTP_400_BAD_REQUEST)   
     
-    @action(detail=False, methods=["put"], url_path="subscriberslist")
+    @action(detail=False, methods=["put"], url_path="subscriberslist",permission_classes=[IsAuthenticated])
     def get_subscribers(self, request, pk=None):
         inputdata=request.data
         queryset=self.get_queryset()
@@ -499,3 +499,43 @@ class SubscribersViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
         
+    @action(detail=True, methods=["patch"], url_path="update_subscribers")
+    def admin_update_subscribers(self, request, pk=None):
+        inputdata=request.data
+        if not inputdata.get("components"):
+            raise ValidationError({"Error":"Please select atleast one componet"})
+        subscriber=self.get_object()
+        l_businessunit = self.request.headers.get('businessunit')
+        queryset = Subscribers.objects.filter(
+            businessunit__businessunit_name=l_businessunit, is_active=True)
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit, is_active=True).first()
+        subscriber_component_create=[]
+        subscriber_component_obj=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=businessunit_qs)
+        l_components_list=inputdata.get("components")
+        try:
+            if subscriber_component_obj:
+                for sub_cmp_obj in subscriber_component_obj:
+                    if sub_cmp_obj.component_id in l_components_list:
+                        if sub_cmp_obj.is_active:
+                            l_components_list.remove(sub_cmp_obj.component_id)
+                            break
+                        sub_cmp_obj.is_active=True
+                    else:
+                        sub_cmp_obj.is_active=False
+                    sub_cmp_obj.save()
+                    l_components_list.remove(sub_cmp_obj.component_id)
+            if l_components_list:
+                for cmp_id in l_components_list:
+                    subscriber_component_create.append(SubcriberComponent(
+                subscriber_id=subscriber.pk,
+                component_id=cmp_id,
+                is_active=True,
+                businessunit=businessunit_qs))
+            if subscriber_component_create:
+                inc_cmp_obj = SubcriberComponent.objects.bulk_create(subscriber_component_create)
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e, status=status.HTTP_404_NOT_FOUND)
+            
+                 

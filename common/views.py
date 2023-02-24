@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from account.permissions import IsBusinessUnitUser
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, UserBusinessunits
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, Subscribers, UserBusinessunits
 from account.permissions import BaseStAppPermission
 from common.serializers import IncidentSerializer
 from common.utils import component_group_order, get_components_all_list
@@ -140,3 +140,16 @@ def Mytemplates(request):
     subject = f"[Data Axle platform status updates] Incident {l_status} - Admin"
     return render(request, template_name='subscriber_email_notification.html', context=context,)
     # return render(request, template_name='start.html', context=context)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def subsciber_type_count(request):
+    data=[]
+    l_business_unit = Businessunits.objects.filter(
+        businessunit_name=request.headers.get('businessunit')).first().businessunit_id
+    l_email_subscriber=Subscribers.objects.filter(businessunit=l_business_unit,email_delivery=True).count()
+    l_sms_subsciber=Subscribers.objects.filter(businessunit=l_business_unit,sms_delivery=True).count()
+    data=[{"email_subscibers":l_email_subscriber,"sms_subscibers":l_sms_subsciber}]
+    return Response(data,status=status.HTTP_200_OK)
+    
