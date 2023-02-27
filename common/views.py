@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from account.permissions import IsBusinessUnitUser
 
 from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, Subscribers, UserBusinessunits
@@ -54,9 +55,14 @@ def get_statuspage_components_list(request):
     """
     queryset = Components.objects.select_related().filter(
         businessunit__businessunit_name=request.headers.get('businessunit'), businessunit__is_active=True)
-    finaldata_list = get_components_all_list(queryset)
+    if  queryset:
+        # raise ValidationError({"Error":"Businessunit not found or inactive, Please provide active businessunit"})
+        finaldata_list = get_components_all_list(queryset)
 
-    return Response(finaldata_list, status=status.HTTP_200_OK)
+        return Response(finaldata_list, status=status.HTTP_200_OK)
+    else:
+        error={"Error":"Businessunit not found or inactive, Please provide active businessunit"}
+        return Response(error,status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(["GET"])

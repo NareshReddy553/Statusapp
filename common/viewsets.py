@@ -219,6 +219,14 @@ class ComponentsViewset(viewsets.ModelViewSet):
         component_create=[]
         if input_data.get('component_name') :
             cmp_orders=Components.objects.filter(businessunit=businessunit_qs).aggregate(Max('group_no'),Max('display_order'))
+            l_group_no__max=0
+            l_display_order__max=0
+            
+            if cmp_orders['group_no__max']:
+                l_group_no__max=cmp_orders['group_no__max']
+            if cmp_orders['display_order__max']:
+                l_display_order__max=cmp_orders['display_order__max']
+                
             l_ComponentsStatus=ComponentsStatus.objects.filter(component_status_name='Operational').first()
             if input_data.get('new_group_name'):
                 new_group_name=input_data.get('new_group_name')
@@ -226,8 +234,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
                 component_create.append(Components(component_name=new_group_name,
                                                    description="",
                                                    is_group=True,
-                                                   group_no=int(cmp_orders['group_no__max'])+1,
-                                                   display_order=int(cmp_orders['display_order__max'])+1,
+                                                   group_no=l_group_no__max+1,
+                                                   display_order=l_display_order__max+1,
                                                    subgroup_display_order=0,
                                                    businessunit=businessunit_qs,
                                                    createduser=user,
@@ -239,8 +247,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
                 component_create.append(Components(component_name=input_data.get('component_name'),
                                                    description=input_data.get('description'),
                                                    is_group=False,
-                                                   group_no=cmp_orders['group_no__max']+1,
-                                                   display_order=cmp_orders['display_order__max']+1,
+                                                   group_no=l_group_no__max+1,
+                                                   display_order=l_display_order__max+1,
                                                    subgroup_display_order=1,
                                                    businessunit=businessunit_qs,
                                                    createduser=user,
@@ -269,8 +277,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
                 component_create.append(Components(component_name=input_data.get('component_name'),
                                                    description=input_data.get('description'),
                                                    is_group=True,
-                                                   group_no=cmp_orders['group_no__max']+1,
-                                                   display_order=cmp_orders['display_order__max']+1,
+                                                   group_no=l_group_no__max+1,
+                                                   display_order=l_display_order__max+1,
                                                    subgroup_display_order=1,
                                                    businessunit=businessunit_qs,
                                                    createduser=user,
@@ -499,17 +507,17 @@ class SubscribersViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
         
-    @action(detail=True, methods=["patch"], url_path="update_subscribers")
+    @action(detail=True, methods=["patch"], url_path="update_subscribers",permission_classes=[IsAuthenticated])
     def admin_update_subscribers(self, request, pk=None):
         inputdata=request.data
         if not inputdata.get("components"):
-            raise ValidationError({"Error":"Please select atleast one componet"})
+            raise ValidationError({"Error":"Please select atleast one component"})
         subscriber=self.get_object()
         l_businessunit = self.request.headers.get('businessunit')
-        queryset = Subscribers.objects.filter(
-            businessunit__businessunit_name=l_businessunit, is_active=True)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit, is_active=True).first()
+        queryset = Subscribers.objects.filter(
+            businessunit=businessunit_qs, is_active=True)
         subscriber_component_create=[]
         subscriber_component_obj=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=businessunit_qs)
         l_components_list=inputdata.get("components")
