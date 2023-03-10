@@ -502,6 +502,7 @@ class SubscribersViewset(viewsets.ModelViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             data=self.get_paginated_response(serializer.data)
+            
             return data
 
         serializer = self.get_serializer(queryset, many=True)
@@ -545,5 +546,17 @@ class SubscribersViewset(viewsets.ModelViewSet):
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_404_NOT_FOUND)
-            
-                 
+     
+    @action(detail=True, methods=["delete"], url_path="unsubscribe",permission_classes=[IsAuthenticated])       
+    def unsubscribe(self, request, pk=None):
+        subscriber_obj=self.get_object()
+        if not subscriber_obj:
+            raise ValidationError({"Error":"Subscriber not found"})
+        # Delete the subscriber
+        try:
+            l_businessunit = self.request.headers.get('businessunit')
+            SubcriberComponent.objects.filter(subscriber=subscriber_obj,businessunit__businessunit_name=l_businessunit).delete()
+            subscriber_obj.delete()
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e, status=status.HTTP_404_NOT_FOUND)

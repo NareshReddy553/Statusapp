@@ -176,6 +176,13 @@ class IncidentsActivitySerializer(serializers.ModelSerializer):
 
 class SubscribersSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
+    components=serializers.SerializerMethodField()
+    
+    
+    def get_components(self,obj):
+        component_obj=Components.objects.filter(component_id__in=SubcriberComponent.objects.filter(subscriber_id=obj.subscriber_id,businessunit=obj.businessunit).values_list('component_id',flat=True))
+        serializer=ComponentsSerializer(component_obj,many=True)
+        return serializer.data
     class Meta:
         model = Subscribers
         fields = '__all__'
