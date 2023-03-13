@@ -530,10 +530,11 @@ class SubscribersViewset(viewsets.ModelViewSet):
                             l_components_list.remove(sub_cmp_obj.component_id)
                             break
                         sub_cmp_obj.is_active=True
+                        l_components_list.remove(sub_cmp_obj.component_id)
                     else:
                         sub_cmp_obj.is_active=False
                     sub_cmp_obj.save()
-                    l_components_list.remove(sub_cmp_obj.component_id)
+                    
             if l_components_list:
                 for cmp_id in l_components_list:
                     subscriber_component_create.append(SubcriberComponent(
