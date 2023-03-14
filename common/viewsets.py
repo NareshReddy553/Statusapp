@@ -528,7 +528,7 @@ class SubscribersViewset(viewsets.ModelViewSet):
                     if sub_cmp_obj.component_id in l_components_list:
                         if sub_cmp_obj.is_active:
                             l_components_list.remove(sub_cmp_obj.component_id)
-                            break
+                            continue
                         sub_cmp_obj.is_active=True
                         l_components_list.remove(sub_cmp_obj.component_id)
                     else:
@@ -544,6 +544,9 @@ class SubscribersViewset(viewsets.ModelViewSet):
                 businessunit=businessunit_qs))
             if subscriber_component_create:
                 inc_cmp_obj = SubcriberComponent.objects.bulk_create(subscriber_component_create)
+                #Just update datetime of subscriber to know last update happen on subsciber
+            subscriber.modify_datetime=datetime.datetime.now()
+            subscriber.save()
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_404_NOT_FOUND)

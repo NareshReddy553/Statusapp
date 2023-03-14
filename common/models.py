@@ -168,6 +168,8 @@ class Subscribers(models.Model):
     class Meta:
         managed = False
         db_table = 'subscribers'
+        ordering = ['-modify_datetime']
+        
     def save(self, *args, **kwargs):
         try:
             super(Subscribers, self).save(*args, **kwargs)

@@ -87,6 +87,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {"default": {}}
+
+# To connect db from docker in ce2
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -101,6 +103,22 @@ DATABASES = {
     }
 }
 
+# To connect remote db from local machine
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'tsapp_dev',
+#         'USER': 'tsapp_usr',
+#         'PASSWORD': 'a6uK$X#o0135',
+#         'HOST': '18.118.80.163',
+#         'PORT': '3306',
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+#         }
+#     }
+# }
+
+# local db
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
