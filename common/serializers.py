@@ -211,7 +211,8 @@ class SubscribersSerializer(serializers.ModelSerializer):
                     
         else:
             raise ValidationError("subscriber type is required in payload")
-        validated_data['subscriber_token']=get_hashed_password(validated_data['email'])
+        hashed_key=get_hashed_password(validated_data['email'])
+        validated_data['subscriber_token']=hashed_key[:20]
         instance = super().create(validated_data)
          
         # Need entry in the subscriber component table which subscriber_id and component_id with respect to business_id
@@ -224,18 +225,22 @@ class SubscribersSerializer(serializers.ModelSerializer):
         if l_sub_com_obj:
            inc_cmp_obj = SubcriberComponent.objects.bulk_create(l_sub_com_obj) 
         #    Need to send the conformation mail
-        subscriber_Hash=instance.subscriber_token
+        subscriber_Hash_id=instance.subscriber_token
         subscribers_email=[instance.email]
+        businessunit_name=l_businessunit_name
         if subscribers_email:
             context = {
-                "subscriber": instance
+                "subscriber": instance,
+                "businessunit":l_businessunit_name,
+                "subscriber_Hash_id":subscriber_Hash_id,
+                
             }
             x = datetime.now().strftime("%x %I:%M %p")
-            subject = f"[Data Axle platform status updates] Welcome to Data Axle platform status application"
-            # send_email(
-            #     template="subscriber_email_notification.html",
-            #     subject=subject,
-            #     context_data=context,
-            #     recipient_list=subscribers_email,
-            # )
+            subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
+            send_email(
+                template="test_subscriber.html",
+                subject=subject,
+                context_data=context,
+                recipient_list=['naresh.gangireddy@data-axle.com'],
+            )
         return instance
