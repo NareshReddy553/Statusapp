@@ -157,12 +157,13 @@ class IncidentSerializer(serializers.ModelSerializer):
                     }
                     x = datetime.now().strftime("%x %I:%M %p")
                     l_status = str(l_incident.status).capitalize()
-                    subject = f"[Data Axle platform status updates] Incident {l_status} - Admin"
+                    subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
                     send_email(
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email,
+                        # recipient_list=subscribers_email,
+                        recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_incident
 
