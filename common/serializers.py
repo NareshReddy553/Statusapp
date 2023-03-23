@@ -150,10 +150,13 @@ class IncidentSerializer(serializers.ModelSerializer):
                 subscribers_email = list(Subscribers.objects.filter(
                     subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
                 if subscribers_email:
+                    l_status = str(l_incident.status).capitalize()
                     context = {
                         "incident_data": l_incident,
                         "component_data": components_effected,
-                        "user": user.email
+                        "user": user.email,
+                        "businessunit":l_businessunit_name,
+                        "status":l_status
                     }
                     x = datetime.now().strftime("%x %I:%M %p")
                     l_status = str(l_incident.status).capitalize()
@@ -162,8 +165,8 @@ class IncidentSerializer(serializers.ModelSerializer):
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        # recipient_list=subscribers_email,
-                        recipient_list=["naresh.gangireddy@data-axle.com"]
+                        recipient_list=subscribers_email,
+                        # recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_incident
 
@@ -242,6 +245,6 @@ class SubscribersSerializer(serializers.ModelSerializer):
                 template="test_subscriber.html",
                 subject=subject,
                 context_data=context,
-                recipient_list=['naresh.gangireddy@data-axle.com'],
+                recipient_list=subscribers_email,
             )
         return instance
