@@ -9,6 +9,8 @@ from common.models import Businessunits, Components, ComponentsStatus, IncidentC
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
 import logging
+
+
 logger=logging.getLogger("common.serializers")
 
 
@@ -164,7 +166,7 @@ class IncidentSerializer(serializers.ModelSerializer):
                     x = datetime.now().strftime("%x %I:%M %p")
                     l_status = str(l_incident.status).capitalize()
                     subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
-                    logger.info("sending Incident  notification to subscriber ",subscribers_email)
+                    logger.info("sending Incident  notification to subscriber")
                     send_email(
                         template="incident_email_notification1.html",
                         subject=subject,
@@ -245,7 +247,7 @@ class SubscribersSerializer(serializers.ModelSerializer):
             }
             x = datetime.now().strftime("%x %I:%M %p")
             subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
-            logger.info("sending notification to subscriber ",subscribers_email)
+            logger.info("sending notification to subscribers ")
             send_email(
                 template="test_subscriber.html",
                 subject=subject,
