@@ -166,13 +166,13 @@ class IncidentSerializer(serializers.ModelSerializer):
                     x = datetime.now().strftime("%x %I:%M %p")
                     l_status = str(l_incident.status).capitalize()
                     subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
-                    logger.info("sending Incident  notification to subscriber")
+                    logger.info("----------sending Incident  notification to subscriber---------------")
                     send_email(
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email],
-                        # recipient_list=["naresh.gangireddy@data-axle.com"]
+                        # recipient_list=subscribers_email+[user.email],
+                        recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_incident
 
@@ -252,6 +252,6 @@ class SubscribersSerializer(serializers.ModelSerializer):
                 template="test_subscriber.html",
                 subject=subject,
                 context_data=context,
-                recipient_list=subscribers_email+[self.context['request'].user.email],
+                recipient_list=["naresh.gangireddy@data-axle.com"],
             )
         return instance
