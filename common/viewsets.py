@@ -517,8 +517,56 @@ class SubscribersViewset(viewsets.ModelViewSet):
         l_businessunit = self.request.headers.get('businessunit')
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit, is_active=True).first()
-        queryset = Subscribers.objects.filter(
+        subscriber_component_create=[]
+        subscriber_component_obj=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=businessunit_qs)
+        l_components_list=inputdata.get("components")
+        try:
+            if subscriber_component_obj:
+                for sub_cmp_obj in subscriber_component_obj:
+                    if sub_cmp_obj.component_id in l_components_list:
+                        if sub_cmp_obj.is_active:
+                            l_components_list.remove(sub_cmp_obj.component_id)
+                            continue
+                        sub_cmp_obj.is_active=True
+                        l_components_list.remove(sub_cmp_obj.component_id)
+                    else:
+                        sub_cmp_obj.is_active=False
+                    sub_cmp_obj.save()
+                    
+            if l_components_list:
+                for cmp_id in l_components_list:
+                    subscriber_component_create.append(SubcriberComponent(
+                subscriber_id=subscriber.pk,
+                component_id=cmp_id,
+                is_active=True,
+                businessunit=businessunit_qs))
+            if subscriber_component_create:
+                inc_cmp_obj = SubcriberComponent.objects.bulk_create(subscriber_component_create)
+                #Just update datetime of subscriber to know last update happen on subsciber
+            subscriber.modify_datetime=datetime.datetime.now()
+            subscriber.save()
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e, status=status.HTTP_404_NOT_FOUND)
+        
+    # This api is used to update subscriber in public page
+    @action(detail=False, methods=["patch"], url_path="subscribers_update")
+    def update_subscribers(self, request, pk=None):
+        inputdata=request.data
+        if not inputdata.get("user_token"):
+            raise ValidationError({"Error":"Please privide user or user required"})
+        if not inputdata.get("components") or not inputdata.get("user_token"):
+            raise ValidationError({"Error":"Please select atleast one component"})
+        l_businessunit = self.request.headers.get('businessunit')
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit, is_active=True).first()
+        if not businessunit_qs:
+            raise ValidationError({"Error":"Subscriber doesn't belong to any valid busuiness units"})
+        sub_obj=Subscribers.objects.filter(subscriber_token=inputdata.get("user_token"),
             businessunit=businessunit_qs, is_active=True)
+        if not sub_obj:
+            raise ValidationError({"Error":"Subscriber not found or subscriber is inactive"})
+        subscriber=sub_obj.first()
         subscriber_component_create=[]
         subscriber_component_obj=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=businessunit_qs)
         l_components_list=inputdata.get("components")
@@ -559,6 +607,31 @@ class SubscribersViewset(viewsets.ModelViewSet):
         # Delete the subscriber
         try:
             l_businessunit = self.request.headers.get('businessunit')
+            SubcriberComponent.objects.filter(subscriber=subscriber_obj,businessunit__businessunit_name=l_businessunit).delete()
+            subscriber_obj.delete()
+            return Response(status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(e, status=status.HTTP_404_NOT_FOUND)
+        
+    # This api is used to delete subscriber in public page
+    @action(detail=False, methods=["delete"], url_path="unsubscribe_public")       
+    def unsubscribe(self, request, pk=None):
+        inputdata=request.data
+        if not inputdata.get("user_token"):
+            raise ValidationError({"Error":"Please privide user or user required"})
+        l_businessunit = self.request.headers.get('businessunit')
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit, is_active=True).first()
+        if not businessunit_qs:
+            raise ValidationError({"Error":"Subscriber doesn't belong to any valid busuiness units"})
+        
+        sub_obj=Subscribers.objects.filter(subscriber_token=inputdata.get("user_token"),
+            businessunit=businessunit_qs, is_active=True)
+        if not sub_obj:
+            raise ValidationError({"Error":"Subscriber not found or subscriber is inactive"})
+        subscriber_obj=sub_obj.first()
+        # Delete the subscriber
+        try:
             SubcriberComponent.objects.filter(subscriber=subscriber_obj,businessunit__businessunit_name=l_businessunit).delete()
             subscriber_obj.delete()
             return Response(status=status.HTTP_200_OK)
