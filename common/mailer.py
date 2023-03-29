@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import get_template
-
+import logging 
+logger = logging.getLogger("common.mailer")
 
 def send_email(template, context_data, subject, recipient_list, attachments=[]):
     # if settings.DEBUG or getattr(settings, 'SUPRESS_EMAIL', None):
@@ -16,8 +17,11 @@ def send_email(template, context_data, subject, recipient_list, attachments=[]):
     for attachment in attachments:
         msg.attach_file(attachment, mimetype="application/octet-stream")
     msg.content_subtype = "html"
-    try:
-        msg.send()
-    except Exception as e:
-        print(e)
-        pass
+    # try:
+    print("mag-----------",msg)
+    msg.send()
+    logger.info("-------mail send successfully---------")
+
+    # except Exception as e:
+    #     print(e)
+    #     pass

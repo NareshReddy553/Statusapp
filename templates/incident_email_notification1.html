@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-    {% load static %}
     <head>
         <meta charset="UTF-8" />
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -237,7 +236,7 @@
               
              <!-- END HIDDEN PREHEADER -->
             <table cellpadding="0" cellspacing="0" border="0" width="100%" class="marginFix">
-                <tr width="100%" bgcolor="#efeff0" class="bgCover" align="center" background="{% static 'images/body_bg.png'%}" valign="bottom" style="background-size: 50%; background-repeat: repeat;">
+                <tr width="100%" bgcolor="#efeff0" class="bgCover" align="center" background="" valign="bottom" style="background-size: 50%; background-repeat: repeat;">
                     <td>
 
 
@@ -261,7 +260,8 @@
                                               font-size: xxx-large;
                                               margin-top: 0px;
                                               margin-bottom: 0px;
-                                              color:  #242424;"
+                                              color:  #242424;
+                                              text-decoration:None;"
                                               >
                                                 {{businessunit}}
                                                 </a>
@@ -326,20 +326,19 @@
                                 <td align="center">
                                     <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0" style="width: 600px;" class="full-width">
                                         <tr>
-                                            <td
-                                                align="middle"
-                                                class="raleway"
-                                                bgcolor="#ffffff"
-                                                valign="bottom"
-                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-size: 36px; font-weight: 300; line-height: 37px; padding: 40px 40px 0px 60px; border-top-left-radius: 10px; border-top-right-radius: 10px;"
-                                            >
-                                                <b> {{status}}</b>
+                                            <td valign="bottom" style="background:white; padding:30.0pt 30.0pt 0in 45.0pt">
+                                                <p class="x_x_MsoNormal" align="center" style="text-align:center; line-height:27.75pt">
+                                                    <b>
+                                                        <span style="font-size: 15pt; font-family: Arial, sans-serif, serif, EmojiFont; color: black;">
+                                                            {{status}} 
+                                                        </span>
+                                                    </b>
                                             </td>
                                         </tr>
                         
                                         <tr>
                                             <td align="middle" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 700; line-height: 26px; padding: 10px 50px 10px 60px;">
-                                                {{name}}
+                                                {{incident_data.name}}
                                             </td>
                                         </tr>
                         
@@ -351,7 +350,7 @@
                                                 valign="bottom"
                                                 style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 21px; padding: 0px 60px 20px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;"
                                             >
-                                                {{message|safe}}
+                                                {{incident_data.message|safe}}
                                             </td>
                                         </tr>
                                     </table>
@@ -380,7 +379,7 @@
                         
                                         <tr>
                                             <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 22px; padding: 0px 50px 20px 60px;">
-                                                The following Data Axle Platform functions will be affected:
+                                                The following {{status}} Platform functions will be affected:
                                             </td>
                                         </tr>
                                         {% for data in component_data %}

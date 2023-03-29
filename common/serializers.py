@@ -8,6 +8,10 @@ from account.utils import get_hashed_password
 from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
+import logging
+
+
+logger=logging.getLogger("common.serializers")
 
 
 class BusinessUnitSerializer(serializers.ModelSerializer):
@@ -120,6 +124,7 @@ class IncidentSerializer(serializers.ModelSerializer):
                     component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
                 if subcomp_obj:
                     Subscriber_list += (subcomp_obj)
+
             inc_cmp_obj = IncidentComponent.objects.bulk_create(l_inc_com_obj)
 
             # Need entry in the incident activity table each time when we create the incident
@@ -150,19 +155,23 @@ class IncidentSerializer(serializers.ModelSerializer):
                 subscribers_email = list(Subscribers.objects.filter(
                     subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
                 if subscribers_email:
+                    l_status = str(l_incident.status).capitalize()
                     context = {
                         "incident_data": l_incident,
                         "component_data": components_effected,
-                        "user": user.email
+                        "user": user.email,
+                        "businessunit":l_businessunit_name,
+                        "status":l_status
                     }
                     x = datetime.now().strftime("%x %I:%M %p")
                     l_status = str(l_incident.status).capitalize()
                     subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+                    logger.info("----------sending Incident  notification to subscriber---------------")
                     send_email(
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        # recipient_list=subscribers_email,
+                        # recipient_list=subscribers_email+[user.email],
                         recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_incident
@@ -238,10 +247,11 @@ class SubscribersSerializer(serializers.ModelSerializer):
             }
             x = datetime.now().strftime("%x %I:%M %p")
             subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
+            logger.info("sending notification to subscribers ")
             send_email(
                 template="test_subscriber.html",
                 subject=subject,
                 context_data=context,
-                recipient_list=['naresh.gangireddy@data-axle.com'],
+                recipient_list=["naresh.gangireddy@data-axle.com"],
             )
         return instance
