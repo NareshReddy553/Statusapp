@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from account.permissions import IsBusinessUnitUser
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, Subscribers, UserBusinessunits
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
 from account.permissions import BaseStAppPermission
 from common.serializers import IncidentSerializer
 from common.utils import component_group_order, get_components_all_list
@@ -159,3 +159,21 @@ def subsciber_type_count(request):
     data=[{"email_subscibers":l_email_subscriber,"sms_subscibers":l_sms_subsciber}]
     return Response(data,status=status.HTTP_200_OK)
     
+
+@api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+def get_subscribers_component_list(request):
+    components_list=[]
+    user_token=request.GET.get('id')
+    l_business_unit = Businessunits.objects.filter(
+        businessunit_name=request.headers.get('businessunit')).first().businessunit_id
+    if user_token:
+        
+        subscriber=Subscribers.objects.filter(subscriber_token=user_token,businessunit=l_business_unit).first()
+        if not subscriber:
+            raise ValidationError({"Error":"Susbscriber not found"})
+        component=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=l_business_unit).values_list('component_id',flat=True)
+        if component:
+            components_list +=component
+        return Response(components_list,status=status.HTTP_200_OK)
+    return Response(components_list)

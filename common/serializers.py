@@ -171,8 +171,8 @@ class IncidentSerializer(serializers.ModelSerializer):
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        # recipient_list=subscribers_email+[user.email],
-                        recipient_list=["naresh.gangireddy@data-axle.com"]
+                        recipient_list=subscribers_email+[user.email]
+                        # recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_incident
 
@@ -252,6 +252,6 @@ class SubscribersSerializer(serializers.ModelSerializer):
                 template="test_subscriber.html",
                 subject=subject,
                 context_data=context,
-                recipient_list=["naresh.gangireddy@data-axle.com"],
+                recipient_list=subscribers_email,
             )
         return instance

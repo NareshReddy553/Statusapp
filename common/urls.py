@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.urls.conf import path
 from rest_framework import routers
-from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_sidebar_list, Mytemplates,get_status_page_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count
+from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_sidebar_list, Mytemplates,get_status_page_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count,get_subscribers_component_list
 
 from common.viewsets import ComponentsViewset, IncidentsActivityViewset, IncidentsViewset, SubscribersViewset
 
@@ -20,6 +20,7 @@ urlpatterns = [
     path(r'status_page_incidents',get_status_page_incidents),
     path('networks',get_network_lists),
     path("subscribers/subsciberscount",subsciber_type_count),
+    path(r'subscribers/subscribercomponent',get_subscribers_component_list),
     path('template', Mytemplates),
     url("", include(router.urls)),
 ]
