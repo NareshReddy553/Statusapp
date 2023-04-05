@@ -632,7 +632,9 @@ class SubscribersViewset(viewsets.ModelViewSet):
         subscriber_obj=sub_obj.first()
         # Delete the subscriber
         try:
-            SubcriberComponent.objects.filter(subscriber=subscriber_obj,businessunit__businessunit_name=l_businessunit).delete()
+            subscriber_components=SubcriberComponent.objects.filter(subscriber=subscriber_obj,businessunit__businessunit_name=l_businessunit)
+            if subscriber_components:
+                subscriber_components.delete()
             subscriber_obj.delete()
             return Response(status=status.HTTP_200_OK)
         except Exception as e:

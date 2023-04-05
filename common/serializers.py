@@ -3,7 +3,7 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from account.services import get_cached_user
 from django.db import transaction
-from account.utils import get_hashed_password
+from account.utils import get_hashed_password, get_subscriber_hashed
 
 from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
 from common.mailer import send_email
@@ -221,7 +221,7 @@ class SubscribersSerializer(serializers.ModelSerializer):
                     
         else:
             raise ValidationError("subscriber type is required in payload")
-        hashed_key=get_hashed_password(validated_data['email'])
+        hashed_key=get_subscriber_hashed(validated_data['email'])
         validated_data['subscriber_token']=hashed_key[:20]
         instance = super().create(validated_data)
          

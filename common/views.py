@@ -172,7 +172,7 @@ def get_subscribers_component_list(request):
         subscriber=Subscribers.objects.filter(subscriber_token=user_token,businessunit=l_business_unit).first()
         if not subscriber:
             raise ValidationError({"Error":"Susbscriber not found"})
-        component=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=l_business_unit).values_list('component_id',flat=True)
+        component=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=l_business_unit,is_active=True).values_list('component_id',flat=True)
         if component:
             components_list =[{"component_id":component}]
         return Response(components_list,status=status.HTTP_200_OK)
