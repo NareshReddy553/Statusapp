@@ -18,7 +18,7 @@ def get_subscriber_hashed(email):
     hash = m.digest()
     pwdHash = base64.b64encode(hash).decode('utf-8')
     #remove special characters form the hash
-    special_characters=['@','#','$','*','&','?','/']
+    special_characters=['@','#','$','*','&','?','/','+','-','_','=','^','<','>','|','~','!','%']
     normal_string=pwdHash
     for i in special_characters:
 # Replace the special character with an empty string

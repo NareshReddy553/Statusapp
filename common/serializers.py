@@ -243,6 +243,8 @@ class SubscribersSerializer(serializers.ModelSerializer):
                 "subscriber": instance,
                 "businessunit":l_businessunit_name,
                 "subscriber_Hash_id":subscriber_Hash_id,
+                "manage_subscriber_url":"http://18.118.80.163/Status/"+l_businessunit_name+'/manage/'+subscriber_Hash_id,
+                "unsubscribe_url":"http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+subscriber_Hash_id
                 
             }
             x = datetime.now().strftime("%x %I:%M %p")
