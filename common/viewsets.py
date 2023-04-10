@@ -35,6 +35,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
         l_incident = self.get_object()
         l_businessunit_name = request.headers.get(
             'businessunit')
+        Subscriber_list=[]
         user = request.user
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True).first()
@@ -50,6 +51,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
             inc_comp_create = []
             component_update = []
             l_incident_activity = []
+            components_effected=[]
             l_datetime = datetime.datetime.now()
             if new_components:
 
@@ -83,6 +85,12 @@ class IncidentsViewset(viewsets.ModelViewSet):
                             qs_component.modifieduser = request.user
                             qs_component.component_status_id = l_status_id
                             component_update.append(qs_component)
+                            
+                    components_effected.append(qs_component.component_name)
+                    subcomp_obj = list(SubcriberComponent.objects.filter(
+                    component_id=new_comp_obj.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
+                    if subcomp_obj:
+                        Subscriber_list += (subcomp_obj)
 
             if uncheck_components:
                 for uncheck_comp_data in uncheck_components:
@@ -113,32 +121,32 @@ class IncidentsViewset(viewsets.ModelViewSet):
             if inc_comp_create:
                 inc_cmp_obj = IncidentComponent.objects.bulk_create(
                     inc_comp_create)
-                # Need entry in the incident activity table each time when we create the incident
-                # if inc_cmp_obj:
-                #     for inc_cmp_data in inc_cmp_obj:
-                #         cmp_qs = Components.objects.filter(
-                #             component_id=inc_cmp_data.component_id).first()
-                #         l_incident_activity.append(IncidentsActivity(
-                #             incident_id=l_incident.pk,
-                #             incident_name=l_incident.name,
-                #             message=l_incident.message,
-                #             status=l_incident.status,
-                #             businessunit_id=l_incident.businessunit_id,
-                #             component_id=cmp_qs.component_id,
-                #             component_name=cmp_qs.component_name,
-                #             component_status=cmp_qs.component_status.component_status_name,
-                #             component_status_id=cmp_qs.component_status.component_status_id,
-                #             createduser_id=user.user_id,
-                #             modifieduser_id=user.user_id,
-                #             created_datetime=datetime.datetime.now(),
-                #             modified_datetime=datetime.datetime.now()))
             if l_incident_activity:
                 incident_activity_obj = IncidentsActivity.objects.bulk_create(
                     l_incident_activity)
-            # send_email('index.html', None, 'test_email',
-            #            ['naresh.gangireddy@data-axle.com'], [])
-            # TODO need to send the mail
-
+            if Subscriber_list:
+                # Send Mail for the subscriber who subscribed for this components
+                subscribers_email = list(Subscribers.objects.filter(
+                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
+                if subscribers_email:
+                    l_status = str(l_incident.status).capitalize()
+                    context = {
+                        "incident_data": l_incident,
+                        "component_data": components_effected,
+                        "user": user.email,
+                        "businessunit":l_businessunit_name,
+                        "status":l_status
+                    }
+                    x = datetime.datetime.now().strftime("%x %I:%M %p")
+                    l_status = str(l_incident.status).capitalize()
+                    subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+                    send_email(
+                        template="incident_email_notification1.html",
+                        subject=subject,
+                        context_data=context,
+                        recipient_list=subscribers_email+[user.email]
+                        # recipient_list=["naresh.gangireddy@data-axle.com"]
+                    )
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors,
@@ -616,8 +624,8 @@ class SubscribersViewset(viewsets.ModelViewSet):
     # This api is used to delete subscriber in public page
     @action(detail=False, methods=["delete"], url_path="unsubscribe_public")       
     def unsubscribe(self, request, pk=None):
-        inputdata=request.data
-        if not inputdata.get("user_token"):
+        user_token=request.GET.get('id')
+        if not user_token:
             raise ValidationError({"Error":"Please privide user or user required"})
         l_businessunit = self.request.headers.get('businessunit')
         businessunit_qs = Businessunits.objects.filter(
@@ -625,7 +633,7 @@ class SubscribersViewset(viewsets.ModelViewSet):
         if not businessunit_qs:
             raise ValidationError({"Error":"Subscriber doesn't belong to any valid busuiness units"})
         
-        sub_obj=Subscribers.objects.filter(subscriber_token=inputdata.get("user_token"),
+        sub_obj=Subscribers.objects.filter(subscriber_token=user_token,
             businessunit=businessunit_qs, is_active=True)
         if not sub_obj:
             raise ValidationError({"Error":"Subscriber not found or subscriber is inactive"})
