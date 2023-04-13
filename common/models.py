@@ -307,3 +307,40 @@ class Smsgateway(models.Model):
     class Meta:
         managed = False
         db_table = 'smsgateway'
+        
+
+
+class ScheduledMaintenance(models.Model):
+    sch_inc_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=250, blank=True, null=True)
+    message = models.CharField(max_length=2000, blank=True, null=True)
+    is_active = models.BooleanField(blank=True, null=True,default=True)
+    schstartdate = models.DateTimeField(db_column='schStartDate') 
+    schenddate = models.DateTimeField(db_column='schEndDate') 
+    is_done = models.BooleanField(blank=True, null=True,default=False)
+    auto_complete = models.BooleanField(blank=True, null=True,default=False)
+    created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
+    modified_datetime = models.DateTimeField(blank=True, null=True,auto_now=True)
+    businessunit = models.ForeignKey(
+        Businessunits, on_delete=models.CASCADE, related_name='sch_mnt_business')
+    status = models.CharField(max_length=100, blank=True, null=True,default='Scheduled')
+
+    class Meta:
+        managed = False
+        db_table = 'Scheduled_Maintenance'
+
+class SchMntComponent(models.Model):
+    sch_mnt_com_id = models.AutoField(primary_key=True)
+    sch_inc= models.ForeignKey(
+        ScheduledMaintenance, on_delete=models.CASCADE, related_name='sch_mnt')
+    component = models.ForeignKey(
+        Components, related_name="sch_mnt_components", on_delete=models.CASCADE)
+    is_active = models.BooleanField(blank=True, null=True,default=True)
+    businessunit = models.ForeignKey(
+        Businessunits, on_delete=models.CASCADE, related_name='sch_mnt_comp_bus+')
+    created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
+    modified_datetime = models.DateTimeField(blank=True, null=True,auto_now=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Sch_mnt_component'

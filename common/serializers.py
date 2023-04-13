@@ -5,7 +5,7 @@ from account.services import get_cached_user
 from django.db import transaction
 from account.utils import get_hashed_password, get_subscriber_hashed
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
 import logging
@@ -257,3 +257,99 @@ class SubscribersSerializer(serializers.ModelSerializer):
                 recipient_list=subscribers_email,
             )
         return instance
+    
+    
+class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
+    businessunit = BusinessUnitSerializer(required=False)
+
+    class Meta:
+        model = ScheduledMaintenance
+        fields = '__all__'
+        
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        l_businessunit_name = self.context['request'].headers.get(
+            'businessunit')
+        user = self.context['request'].user
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        validated_data['businessunit'] = businessunit_qs
+        # validated_data['createduser'] = user
+        # validated_data['modifieduser'] = user
+        components_list = self.initial_data.get('components', None)
+        if not components_list:
+            raise ValidationError({"Error":"Please select atleast one component"})
+        l_sch_mnt = super().create(validated_data)
+        l_incident_activity = list()
+        Subscriber_list = list()
+        if components_list is not None:
+            # Need entry in the sheduled maintanence component table which scd_mnt_id and component_id with respect to business_id
+            l_sch_mnt_com_obj = [SchMntComponent(
+                sch_inc=l_sch_mnt,
+                component_id=cmp_sts.get('component_id'),
+                is_active=True,
+                businessunit=businessunit_qs
+            ) for cmp_sts in components_list]
+            for cmp_sts in components_list:
+                component_status_obj = ComponentsStatus.objects.filter(
+                    component_status_name=cmp_sts.get('component_status')).first()
+                # update the component status in component table
+                update_component_obj = Components.objects.get(pk=cmp_sts.get('component_id'))
+                # We have to get the component subscribers from incident created
+
+                subcomp_obj = list(SubcriberComponent.objects.filter(
+                    component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
+                if subcomp_obj:
+                    Subscriber_list += (subcomp_obj)
+
+            inc_cmp_obj = SchMntComponent.objects.bulk_create(l_sch_mnt_com_obj)
+
+            # # Need entry in the incident activity table each time when we create the incident
+            # if inc_cmp_obj:
+            #     for inc_cmp_data in inc_cmp_obj:
+            #         cmp_qs = Components.objects.filter(
+            #             component_id=inc_cmp_data.component_id).first()
+            #         l_incident_activity.append(IncidentsActivity(
+            #             incident_id=l_incident.pk,
+            #             incident_name=l_incident.name,
+            #             message=l_incident.message,
+            #             status=l_incident.status,
+            #             businessunit_id=l_incident.businessunit_id,
+            #             component_id=cmp_qs.component_id,
+            #             component_name=cmp_qs.component_name,
+            #             component_status=cmp_qs.component_status.component_status_name,
+            #             component_status_id=cmp_qs.component_status.component_status_id,
+            #             createduser_id=user.user_id,
+            #             modifieduser_id=user.user_id,
+            #             created_datetime=datetime.now(),
+            #             modified_datetime=datetime.now()))
+            # if l_incident_activity:
+            #     incident_activity_obj = IncidentsActivity.objects.bulk_create(
+            #         l_incident_activity)
+            # # TODO
+            # if Subscriber_list:
+            #     # Send Mail for the subscriber who subscribed for this components
+            #     subscribers_email = list(Subscribers.objects.filter(
+            #         subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
+            #     if subscribers_email:
+            #         l_status = str(l_incident.status).capitalize()
+            #         context = {
+            #             "incident_data": l_incident,
+            #             "component_data": components_effected,
+            #             "user": user.email,
+            #             "businessunit":l_businessunit_name,
+            #             "status":l_status
+            #         }
+            #         x = datetime.now().strftime("%x %I:%M %p")
+            #         l_status = str(l_incident.status).capitalize()
+            #         subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+            #         logger.info("----------sending Incident  notification to subscriber---------------")
+            #         send_email(
+            #             template="incident_email_notification1.html",
+            #             subject=subject,
+            #             context_data=context,
+            #             recipient_list=subscribers_email+[user.email]
+            #             # recipient_list=["naresh.gangireddy@data-axle.com"]
+            #         )
+        return l_sch_mnt

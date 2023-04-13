@@ -10,8 +10,8 @@ from account.utils import get_hashed_password
 from django.db.models import Q
 from django.db.models import Max
 
-from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
-from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, SubscribersSerializer
+from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
+from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
 from django.db import transaction
@@ -647,3 +647,18 @@ class SubscribersViewset(viewsets.ModelViewSet):
             return Response(status=status.HTTP_200_OK)
         except Exception as e:
             return Response(e, status=status.HTTP_404_NOT_FOUND)
+        
+        
+        
+        
+        
+class ScheduledMaintanenceViewset(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ScheduledMaintanenceSerializer
+    queryset=ScheduledMaintenance.objects.all()
+
+    def get_queryset(self):
+        l_businessunit = self.request.headers.get('businessunit')
+        queryset = ScheduledMaintenance.objects.filter(
+            businessunit__businessunit_name=l_businessunit, is_active=True)
+        return queryset

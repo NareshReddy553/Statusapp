@@ -3,14 +3,15 @@ from django.urls.conf import path
 from rest_framework import routers
 from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_sidebar_list, Mytemplates,get_status_page_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count,get_subscribers_component_list
 
-from common.viewsets import ComponentsViewset, IncidentsActivityViewset, IncidentsViewset, SubscribersViewset
+from common.viewsets import ComponentsViewset, IncidentsActivityViewset, IncidentsViewset, ScheduledMaintanenceViewset, SubscribersViewset
 
 
 router = routers.DefaultRouter()
 router.register(r"incidents", IncidentsViewset, basename="incidents")
 router.register(r"components", ComponentsViewset, basename="components")
 router.register(r"incident_activity_log", IncidentsActivityViewset)
-router.register(r'subscribers',SubscribersViewset)
+router.register(r'subscribers',SubscribersViewset),
+router.register(r"scheduled_maintanence",ScheduledMaintanenceViewset)
 urlpatterns = [
     path(r'components/components_list', get_components_list),
     path(r'components/statuspage_components_list',get_statuspage_components_list),
