@@ -344,3 +344,19 @@ class SchMntComponent(models.Model):
     class Meta:
         managed = False
         db_table = 'Sch_mnt_component'
+
+
+class SchMntActivity(models.Model):
+    sch_mnt_activity_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    status = models.CharField(max_length=100, blank=True, null=True)
+    message = models.CharField(max_length=100, blank=True, null=True)
+    schstartdate = models.DateTimeField(db_column='schStartDate', blank=True, null=True) 
+    schenddate = models.DateTimeField(db_column='schEndDate', blank=True, null=True)  
+    createduser_id = models.IntegerField(blank=True, null=True)
+    created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
+    sch_inc_id = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = 'Sch_mnt_activity'

@@ -5,7 +5,7 @@ from account.services import get_cached_user
 from django.db import transaction
 from account.utils import get_hashed_password, get_subscriber_hashed
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
 import logging
@@ -281,7 +281,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
         if not components_list:
             raise ValidationError({"Error":"Please select atleast one component"})
         l_sch_mnt = super().create(validated_data)
-        l_incident_activity = list()
+        l_sch_mnt_activity = list()
         Subscriber_list = list()
         if components_list is not None:
             # Need entry in the sheduled maintanence component table which scd_mnt_id and component_id with respect to business_id
@@ -292,42 +292,25 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 businessunit=businessunit_qs
             ) for cmp_sts in components_list]
             for cmp_sts in components_list:
-                component_status_obj = ComponentsStatus.objects.filter(
-                    component_status_name=cmp_sts.get('component_status')).first()
-                # update the component status in component table
-                update_component_obj = Components.objects.get(pk=cmp_sts.get('component_id'))
                 # We have to get the component subscribers from incident created
-
                 subcomp_obj = list(SubcriberComponent.objects.filter(
                     component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
                 if subcomp_obj:
                     Subscriber_list += (subcomp_obj)
 
-            inc_cmp_obj = SchMntComponent.objects.bulk_create(l_sch_mnt_com_obj)
-
-            # # Need entry in the incident activity table each time when we create the incident
-            # if inc_cmp_obj:
-            #     for inc_cmp_data in inc_cmp_obj:
-            #         cmp_qs = Components.objects.filter(
-            #             component_id=inc_cmp_data.component_id).first()
-            #         l_incident_activity.append(IncidentsActivity(
-            #             incident_id=l_incident.pk,
-            #             incident_name=l_incident.name,
-            #             message=l_incident.message,
-            #             status=l_incident.status,
-            #             businessunit_id=l_incident.businessunit_id,
-            #             component_id=cmp_qs.component_id,
-            #             component_name=cmp_qs.component_name,
-            #             component_status=cmp_qs.component_status.component_status_name,
-            #             component_status_id=cmp_qs.component_status.component_status_id,
-            #             createduser_id=user.user_id,
-            #             modifieduser_id=user.user_id,
-            #             created_datetime=datetime.now(),
-            #             modified_datetime=datetime.now()))
-            # if l_incident_activity:
-            #     incident_activity_obj = IncidentsActivity.objects.bulk_create(
-            #         l_incident_activity)
-            # # TODO
+            sch_mnt_inc_cmp_obj = SchMntComponent.objects.bulk_create(l_sch_mnt_com_obj)
+            # Need entry in the scheduled maintenance activity table each time when we create the scheduled maintenance incident
+            if sch_mnt_inc_cmp_obj:
+                SchMntActivity.objects.create(
+                    sch_inc_id=l_sch_mnt.pk,
+                    name=l_sch_mnt.name,
+                    status=l_sch_mnt.status,
+                    message=l_sch_mnt.message,
+                    schstartdate=l_sch_mnt.schstartdate,
+                    schenddate=l_sch_mnt.schenddate,
+                    createduser_id=user.pk
+                )
+                
             # if Subscriber_list:
             #     # Send Mail for the subscriber who subscribed for this components
             #     subscribers_email = list(Subscribers.objects.filter(
@@ -353,3 +336,75 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             #             # recipient_list=["naresh.gangireddy@data-axle.com"]
             #         )
         return l_sch_mnt
+    
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        l_businessunit_name = self.context['request'].headers.get(
+            'businessunit')
+        user = self.context['request'].user
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        
+        instance.name = validated_data.get('name', instance.name)
+        instance.status = validated_data.get('status', instance.status)
+        instance.message = validated_data.get('message', instance.message)
+        instance.schstartdate = validated_data.get('schstartdate', instance.schstartdate)
+        instance.schenddate = validated_data.get('schenddate', instance.schenddate)
+        instance.businessunit=businessunit_qs
+        if instance.status=='Completed':
+            instance.is_done=1
+        instance.save()
+        # insert into activity history table
+        SchMntActivity.objects.create(
+                    sch_inc_id=instance.pk,
+                    name=instance.name,
+                    status=instance.status,
+                    message=instance.message,
+                    schstartdate=instance.schstartdate,
+                    schenddate=instance.schenddate,
+                    createduser_id=user.pk
+                )        
+        sch_mnt_component_obj=SchMntComponent.objects.filter(sch_inc=instance,businessunit=businessunit_qs)
+        l_components=self.initial_data.get('components')
+        sch_mnt_component_create=[]
+        if not l_components:
+            raise ValidationError({"Error":"Please select atleast one component"})
+        try:
+            if sch_mnt_component_obj:
+                for sch_cmp_obj in sch_mnt_component_obj:
+                    if sch_cmp_obj.component_id in l_components:
+                        if sch_cmp_obj.is_active:
+                            l_components.remove(sch_cmp_obj.component_id)
+                            continue
+                        sch_cmp_obj.is_active=True
+                        l_components.remove(sch_cmp_obj.component_id)
+                    else:
+                        sch_cmp_obj.is_active=False
+                    sch_cmp_obj.save()
+                    
+            if l_components:
+                for cmp_id in l_components:
+                    sch_mnt_component_create.append(SchMntComponent(
+                sch_inc=instance,
+                component_id=cmp_id,
+                is_active=True,
+                businessunit=instance.businessunit))
+            if sch_mnt_component_create:
+                sch_mnt_cmp_obj = SchMntComponent.objects.bulk_create(sch_mnt_component_create)
+            if not instance.status=='Scheduled':
+                Components.objects.filter(businessunit=instance.businessunit,is_active=True,component_id__in=l_components).update(component_status=ComponentsStatus.objects.filter(component_status_name='Under Maintenance').first())
+                
+        except Exception as e:
+            return e
+        return instance
+    
+    
+class SchMntActivitySerializer(serializers.ModelSerializer):
+    createduser = serializers.SerializerMethodField()
+    
+    def get_createduser(self, obj):
+        return get_cached_user(obj.createduser_id)
+
+    class Meta:
+        model = SchMntActivity
+        fields = '__all__'

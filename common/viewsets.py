@@ -10,7 +10,7 @@ from account.utils import get_hashed_password
 from django.db.models import Q
 from django.db.models import Max
 
-from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
+from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
 from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
@@ -655,10 +655,21 @@ class SubscribersViewset(viewsets.ModelViewSet):
 class ScheduledMaintanenceViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = ScheduledMaintanenceSerializer
-    queryset=ScheduledMaintenance.objects.all()
+    queryset=ScheduledMaintenance.objects.filter(is_active=True)
 
     def get_queryset(self):
         l_businessunit = self.request.headers.get('businessunit')
         queryset = ScheduledMaintenance.objects.filter(
             businessunit__businessunit_name=l_businessunit, is_active=True)
         return queryset
+
+
+    @action(detail=True, methods=["delete"], url_path="sch_mnt_del")       
+    def delete_scheduled_maintenance(self, request, pk=None):
+      
+        sch_mnt_obj=self.get_object()
+        SchMntComponent.objects.filter(sch_inc=sch_mnt_obj).update(is_active=False)
+        sch_mnt_obj.is_active=False
+        sch_mnt_obj.save()
+        return Response(status=status.HTTP_200_OK)
+    

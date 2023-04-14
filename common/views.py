@@ -8,9 +8,9 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from account.permissions import IsBusinessUnitUser
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, SchMntActivity, SchMntComponent, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
 from account.permissions import BaseStAppPermission
-from common.serializers import IncidentSerializer
+from common.serializers import IncidentSerializer, SchMntActivitySerializer
 from common.utils import component_group_order, get_components_all_list
 
 # Create your views here.
@@ -173,6 +173,32 @@ def get_subscribers_component_list(request):
         if not subscriber:
             raise ValidationError({"Error":"Susbscriber not found"})
         component=SubcriberComponent.objects.filter(subscriber=subscriber,businessunit=l_business_unit,is_active=True).values_list('component_id',flat=True)
+        if component:
+            components_list =[{"component_id":component}]
+        return Response(components_list,status=status.HTTP_200_OK)
+    return Response(components_list)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_scheduled_maintenance_activity_list(request):
+    sch_mnt_act_list=[]
+    sch_mnt_id=request.GET.get('id')
+    if sch_mnt_id: 
+        sch_mnt_activity=SchMntActivity.objects.filter(sch_inc_id=sch_mnt_id)
+        if not sch_mnt_activity:
+            raise ValidationError({"Error":"scheduled maintenance activity not found"})
+        serializer=SchMntActivitySerializer(sch_mnt_activity,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    return Response(sch_mnt_act_list,status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_sch_mnt_component_list(request):
+    components_list=[]
+    sch_mnt_id=request.GET.get('id')
+    if sch_mnt_id:
+        component=SchMntComponent.objects.filter(sch_inc_id=sch_mnt_id,is_active=True).values_list('component_id',flat=True)
         if component:
             components_list =[{"component_id":component}]
         return Response(components_list,status=status.HTTP_200_OK)
