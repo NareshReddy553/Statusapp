@@ -261,7 +261,12 @@ class SubscribersSerializer(serializers.ModelSerializer):
     
 class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
-
+    components = serializers.SerializerMethodField()
+    
+    def get_components(self, obj):
+        component_obj=Components.objects.filter(component_id__in=SchMntComponent.objects.filter(sch_inc=obj,businessunit=obj.businessunit,is_active=True).values_list('component_id',flat=True))
+        serializer=ComponentsSerializer(component_obj,many=True)
+        return serializer.data
     class Meta:
         model = ScheduledMaintenance
         fields = '__all__'
