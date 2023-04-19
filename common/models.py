@@ -360,3 +360,33 @@ class SchMntActivity(models.Model):
     class Meta:
         managed = False
         db_table = 'Sch_mnt_activity'
+
+
+class IncidentTemplate(models.Model):
+    template_id = models.AutoField(primary_key=True)
+    template_name = models.CharField(unique=True, max_length=250)
+    incident_title = models.CharField(max_length=250)
+    description = models.CharField(max_length=2000, blank=True, null=True)
+    created_datetime = models.DateTimeField(auto_now_add=True)
+    modified_datetime = models.DateTimeField(auto_now=True)
+    createduser = models.ForeignKey(
+        Users,
+        models.DO_NOTHING,
+        related_name="inc_temp_created_user+",
+        blank=True,
+        null=True,
+    )
+    modifieduser = models.ForeignKey(
+        Users,
+        models.DO_NOTHING,
+        related_name="inc_temp_mdf_user+",
+        blank=True,
+        null=True,
+    )
+    businessunit = models.ForeignKey(
+        Businessunits, on_delete=models.CASCADE, related_name='inc_temp_bus+')
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Incident_Template'

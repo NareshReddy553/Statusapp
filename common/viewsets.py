@@ -10,8 +10,8 @@ from account.utils import get_hashed_password
 from django.db.models import Q
 from django.db.models import Max
 
-from common.models import Businessunits, Components, IncidentComponent, Incidents, IncidentsActivity, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
-from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
+from common.models import Businessunits, Components, IncidentComponent, IncidentTemplate, Incidents, IncidentsActivity, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
+from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentTemplateSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
 from django.db import transaction
@@ -672,4 +672,29 @@ class ScheduledMaintanenceViewset(viewsets.ModelViewSet):
         sch_mnt_obj.is_active=False
         sch_mnt_obj.save()
         return Response(status=status.HTTP_200_OK)
+    
+    
+    
+class IncidentTemplateViewset(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = IncidentTemplateSerializer
+    queryset=IncidentTemplate.objects.filter(is_active=True)
+
+    def get_queryset(self):
+        l_businessunit = self.request.headers.get('businessunit')
+        queryset = IncidentTemplate.objects.filter(
+            businessunit__businessunit_name=l_businessunit, is_active=True)
+        return queryset
+
+
+    @action(detail=True, methods=["delete"], url_path="inc_temp_del")       
+    def delete_incident_template(self, request, pk=None):
+      
+        inc_temp_obj=self.get_object()
+        if inc_temp_obj:
+            inc_temp_obj.is_active=False
+            inc_temp_obj.save()
+        
+        return Response(status=status.HTTP_200_OK)
+    
     

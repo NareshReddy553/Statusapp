@@ -5,7 +5,7 @@ from account.services import get_cached_user
 from django.db import transaction
 from account.utils import get_hashed_password, get_subscriber_hashed
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
+from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, IncidentTemplate, Incidents, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
 import logging
@@ -413,3 +413,58 @@ class SchMntActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = SchMntActivity
         fields = '__all__'
+        
+        
+class IncidentTemplateSerializer(serializers.ModelSerializer):
+    businessunit = BusinessUnitSerializer(required=False)
+    createduser = serializers.SerializerMethodField()
+    modifieduser = serializers.SerializerMethodField()
+    
+    def get_createduser(self, obj):
+        return get_cached_user(obj.createduser_id)
+
+    def get_modifieduser(self, obj):
+        return get_cached_user(obj.modifieduser_id)
+    class Meta:
+        model = IncidentTemplate
+        fields = '__all__'
+        
+    @transaction.atomic
+    def create(self, validated_data):
+        l_businessunit_name = self.context['request'].headers.get(
+            'businessunit')
+        user = self.context['request'].user
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        validated_data['businessunit'] = businessunit_qs
+        validated_data['createduser'] = user
+        validated_data['modifieduser'] = user
+        try:
+    
+            l_sch_mnt = super().create(validated_data)
+        except Exception as e:
+            return e
+        
+        return l_sch_mnt
+    
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        l_businessunit_name = self.context['request'].headers.get(
+            'businessunit')
+        user = self.context['request'].user
+        businessunit_qs = Businessunits.objects.filter(
+            businessunit_name=l_businessunit_name, is_active=True).first()
+        if not businessunit_qs:
+            raise ValidationError({"Error":"Businessunit is not found or not in a active businessunit "})
+        try:
+            instance.template_name = validated_data.get('template_name', instance.template_name)
+            instance.incident_title = validated_data.get('incident_title', instance.incident_title)
+            instance.description = validated_data.get('description', instance.description)
+            instance.modified_datetime = datetime.now()
+            instance.modifieduser = user
+            instance.businessunit=businessunit_qs
+            instance.save()
+       
+        except Exception as e:
+            return e
+        return instance
