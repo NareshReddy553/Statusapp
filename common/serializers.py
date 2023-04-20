@@ -287,6 +287,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             raise ValidationError({"Error":"Please select atleast one component"})
         l_sch_mnt = super().create(validated_data)
         l_sch_mnt_activity = list()
+        components_effected=[]
         Subscriber_list = list()
         if components_list is not None:
             # Need entry in the sheduled maintanence component table which scd_mnt_id and component_id with respect to business_id
@@ -302,6 +303,10 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
                 if subcomp_obj:
                     Subscriber_list += (subcomp_obj)
+                component_obj=Components.objects.filter(component_id=cmp_sts.get('component_id')).first()
+                components_effected.append(component_obj.component_name)
+                # need to get list of component names that are effected
+                
 
             sch_mnt_inc_cmp_obj = SchMntComponent.objects.bulk_create(l_sch_mnt_com_obj)
             # Need entry in the scheduled maintenance activity table each time when we create the scheduled maintenance incident
@@ -316,30 +321,30 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     createduser_id=user.pk
                 )
                 
-            # if Subscriber_list:
-            #     # Send Mail for the subscriber who subscribed for this components
-            #     subscribers_email = list(Subscribers.objects.filter(
-            #         subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
-            #     if subscribers_email:
-            #         l_status = str(l_incident.status).capitalize()
-            #         context = {
-            #             "incident_data": l_incident,
-            #             "component_data": components_effected,
-            #             "user": user.email,
-            #             "businessunit":l_businessunit_name,
-            #             "status":l_status
-            #         }
-            #         x = datetime.now().strftime("%x %I:%M %p")
-            #         l_status = str(l_incident.status).capitalize()
-            #         subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
-            #         logger.info("----------sending Incident  notification to subscriber---------------")
-            #         send_email(
-            #             template="incident_email_notification1.html",
-            #             subject=subject,
-            #             context_data=context,
-            #             recipient_list=subscribers_email+[user.email]
-            #             # recipient_list=["naresh.gangireddy@data-axle.com"]
-            #         )
+            if Subscriber_list:
+                # Send Mail for the subscriber who subscribed for this components
+                subscribers_email = list(Subscribers.objects.filter(
+                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
+                if subscribers_email:
+                    l_status = str(l_sch_mnt.status).capitalize()
+                    context = {
+                        "incident_data": l_sch_mnt,
+                        "component_data": components_effected,
+                        "user": user.email,
+                        "businessunit":l_businessunit_name,
+                        "status":l_status
+                    }
+                    x = datetime.now().strftime("%x %I:%M %p")
+                    l_status = str(l_sch_mnt.status).capitalize()
+                    subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
+                    logger.info("----------sending Incident  notification to subscriber---------------")
+                    send_email(
+                        template="scheduled_maintenance_email_notification.html",
+                        subject=subject,
+                        context_data=context,
+                        recipient_list=subscribers_email+[user.email]
+                        # recipient_list=["naresh.gangireddy@data-axle.com"]
+                    )
         return l_sch_mnt
     
     @transaction.atomic
@@ -398,7 +403,42 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 sch_mnt_cmp_obj = SchMntComponent.objects.bulk_create(sch_mnt_component_create)
             if not instance.status=='Scheduled':
                 Components.objects.filter(businessunit=instance.businessunit,is_active=True,component_id__in=l_components).update(component_status=ComponentsStatus.objects.filter(component_status_name='Under Maintenance').first())
-                
+            components_list=self.initial_data.get('components')
+            components_effected=[]
+            Subscriber_list=[]
+            for cmp_sts in components_list:
+                # We have to get the component subscribers from incident created
+                subcomp_obj = list(SubcriberComponent.objects.filter(
+                    component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
+                if subcomp_obj:
+                    Subscriber_list += (subcomp_obj)
+                component_obj=Components.objects.filter(component_id=cmp_sts.get('component_id')).first()
+                components_effected.append(component_obj.component_name)
+                # need to get list of component names that are effected
+            if Subscriber_list:
+                # Send Mail for the subscriber who subscribed for this components
+                subscribers_email = list(Subscribers.objects.filter(
+                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
+                if subscribers_email:
+                    l_status = str(instance.status).capitalize()
+                    context = {
+                        "incident_data": instance,
+                        "component_data": components_effected,
+                        "user": user.email,
+                        "businessunit":l_businessunit_name,
+                        "status":l_status
+                    }
+                    x = datetime.now().strftime("%x %I:%M %p")
+                    l_status = str(instance.status).capitalize()
+                    subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
+                    logger.info("----------sending Incident  notification to subscriber---------------")
+                    send_email(
+                        template="scheduled_maintenance_email_notification.html",
+                        subject=subject,
+                        context_data=context,
+                        recipient_list=subscribers_email+[user.email]
+                        # recipient_list=["naresh.gangireddy@data-axle.com"]
+                    )
         except Exception as e:
             return e
         return instance
