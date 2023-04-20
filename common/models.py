@@ -328,6 +328,7 @@ class ScheduledMaintenance(models.Model):
     class Meta:
         managed = False
         db_table = 'Scheduled_Maintenance'
+        ordering = ['-modified_datetime']
 
 class SchMntComponent(models.Model):
     sch_mnt_com_id = models.AutoField(primary_key=True)
@@ -360,6 +361,7 @@ class SchMntActivity(models.Model):
     class Meta:
         managed = False
         db_table = 'Sch_mnt_activity'
+        ordering = ['-created_datetime']
 
 
 class IncidentTemplate(models.Model):

@@ -297,19 +297,11 @@
                                 <td align="center">
                                     <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#efeff0" style="width: 600px;" class="full-width">
                                         <tr>
-                                            {% if status=='Scheduled'%}
+                                            {% if status == "Scheduled" %}
                                             <td align="middle" class="x_raleway" bgcolor="#ffffff" valign="bottom" style="font-family:'raleway',Arial,Helvetica,sans-serif; font-size:36px; font-weight:300; line-height:37px; padding:30.0pt 30.0pt 0in 45.0pt;">
                                                 <b>MARK YOUR CALENDAR </b>
                                             </td>
                                             {% endif %}
-                                            <td valign="bottom" style="background:white; padding:30.0pt 30.0pt 0in 45.0pt">
-                                                <p class="x_x_MsoNormal" align="center" style="text-align:center; line-height:27.75pt">
-                                                    <b>
-                                                        <span style="font-size: 15pt; font-family: Arial, sans-serif, serif, EmojiFont; color: black;">
-                                                            {{status}} 
-                                                        </span>
-                                                    </b>
-                                            </td>
                                         </tr>
                         
                                         <tr>
@@ -355,7 +347,7 @@
                         
                                         <tr>
                                             <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 22px; padding: 0px 50px 20px 60px;">
-                                                During the maintenance window, the following Data Axle Platform functions will be affected:
+                                                During the maintenance window, the following {{businessunit}} Platform functions will be affected:
                                             </td>
                                         </tr>
                                         {% for data in component_data %}
@@ -375,7 +367,7 @@
                                         </tr>
                                         <tr>
                                             <td align="middle" class="x_raleway" bgcolor="#ffffff" valign="bottom" style="font-family:'raleway',Arial,Helvetica,sans-serif; font-weight:500; font-size:16px; line-height:21px; padding:0px 60px 20px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
-                                                Created by: {{email}} 
+                                                Created by: {{user}} 
                                             </td>
                                         </tr>
                                         
@@ -406,7 +398,7 @@
                                   <tr>
                                     <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 22px; padding: 0px 50px 20px 60px;">
                                         Sincerely,<br />
-                                        Yes Marketing Technical Operations <br>
+                                        {{businessunit}} Technical Operations <br>
                                         Phone: <b>866-275-7678</b>
                                     </td>
                                   </tr>
