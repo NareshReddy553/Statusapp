@@ -375,10 +375,10 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     createduser_id=user.pk
                 )        
         sch_mnt_component_obj=SchMntComponent.objects.filter(sch_inc=instance,businessunit=businessunit_qs)
-        components=self.initial_data.get('components')
-        l_components=[]
-        for comp in components:
-            l_components.append(comp.get('component_id'))
+        l_components=self.initial_data.get('components')
+        # l_components=[]
+        # for comp in components:
+        #     l_components.append(comp.get('component_id'))
         sch_mnt_component_create=[]
         if not l_components:
             raise ValidationError({"Error":"Please select atleast one component"})
