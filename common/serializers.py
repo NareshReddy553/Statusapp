@@ -352,6 +352,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
         l_businessunit_name = self.context['request'].headers.get(
             'businessunit')
         user = self.context['request'].user
+        initialdata=self.initial_data.get('components')
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True).first()
         
@@ -375,7 +376,8 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     createduser_id=user.pk
                 )        
         sch_mnt_component_obj=SchMntComponent.objects.filter(sch_inc=instance,businessunit=businessunit_qs)
-        l_components=self.initial_data.get('components')
+        l_components=[]
+        l_components+=initialdata
         # l_components=[]
         # for comp in components:
         #     l_components.append(comp.get('component_id'))
@@ -406,16 +408,16 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 sch_mnt_cmp_obj = SchMntComponent.objects.bulk_create(sch_mnt_component_create)
             if not instance.status=='Scheduled':
                 Components.objects.filter(businessunit=instance.businessunit,is_active=True,component_id__in=l_components).update(component_status=ComponentsStatus.objects.filter(component_status_name='Under Maintenance').first())
-            components_list=self.initial_data.get('components')
+            components_list=initialdata
             components_effected=[]
             Subscriber_list=[]
             for cmp_sts in components_list:
                 # We have to get the component subscribers from incident created
                 subcomp_obj = list(SubcriberComponent.objects.filter(
-                    component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
+                    component_id=cmp_sts, businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
                 if subcomp_obj:
                     Subscriber_list += (subcomp_obj)
-                component_obj=Components.objects.filter(component_id=cmp_sts.get('component_id')).first()
+                component_obj=Components.objects.filter(component_id=cmp_sts).first()
                 components_effected.append(component_obj.component_name)
                 # need to get list of component names that are effected
             if Subscriber_list:
