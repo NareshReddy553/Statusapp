@@ -367,7 +367,7 @@ class SchMntActivity(models.Model):
 class IncidentTemplate(models.Model):
     template_id = models.AutoField(primary_key=True)
     template_name = models.CharField(unique=True, max_length=250)
-    incident_title = models.CharField(max_length=250)
+    incident_title = models.CharField(max_length=250,blank=True, null=True)
     description = models.CharField(max_length=2000, blank=True, null=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
     modified_datetime = models.DateTimeField(auto_now=True)
