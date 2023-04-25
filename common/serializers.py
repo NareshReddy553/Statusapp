@@ -36,18 +36,18 @@ class ComponentsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class IncidentAdditionalRecipientsSerializer(serializers.ModelSerializer):
-    createduser = serializers.SerializerMethodField()
-    def get_createduser(self, obj):
-        return get_cached_user(obj.createduser_id)
+    # createduser = serializers.SerializerMethodField()
+    # def get_createduser(self, obj):
+    #     return get_cached_user(obj.createduser_id)
     
     class Meta:
         model = IncidentAdditionalRecipients
         fields = '__all__'
         
 class SchMntAdditionalRecipientsSerializer(serializers.ModelSerializer):
-    createduser = serializers.SerializerMethodField()
-    def get_createduser(self, obj):
-        return get_cached_user(obj.createduser_id)
+    # createduser = serializers.SerializerMethodField()
+    # def get_createduser(self, obj):
+    #     return get_cached_user(obj.createduser_id)
     
     
     class Meta:
