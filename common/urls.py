@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.urls.conf import path
 from rest_framework import routers
-from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_scheduled_maintenance_activity_list, get_sidebar_list, Mytemplates,get_status_page_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count,get_subscribers_component_list,get_sch_mnt_component_list
+from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_scheduled_maintenance_activity_list, get_sidebar_list, Mytemplates,get_status_page_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count,get_subscribers_component_list,get_sch_mnt_component_list,get_incident_impact_list
 
 from common.viewsets import ComponentsViewset, IncidentTemplateViewset, IncidentsActivityViewset, IncidentsViewset, ScheduledMaintanenceViewset, SubscribersViewset
 
@@ -26,6 +26,7 @@ urlpatterns = [
     path(r'subscribers/subscribercomponent',get_subscribers_component_list),
     path(r'scheduled_maintanence/activity_list',get_scheduled_maintenance_activity_list),
     path(r'scheduled_maintanence/components_list',get_sch_mnt_component_list),
+    path(r'incidents/impact_list',get_incident_impact_list),
     path('template', Mytemplates),
     url("", include(router.urls)),
 ]

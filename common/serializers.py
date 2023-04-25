@@ -3,9 +3,10 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from account.services import get_cached_user
 from django.db import transaction
+from django.db.models import Q
 from account.utils import get_hashed_password, get_subscriber_hashed
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, IncidentTemplate, Incidents, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
+from common.models import Businessunits, Components, ComponentsStatus, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, SchMntAdditionalRecipients, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
 import logging
@@ -34,6 +35,25 @@ class ComponentsSerializer(serializers.ModelSerializer):
         model = Components
         fields = '__all__'
 
+class IncidentAdditionalRecipientsSerializer(serializers.ModelSerializer):
+    createduser = serializers.SerializerMethodField()
+    def get_createduser(self, obj):
+        return get_cached_user(obj.createduser_id)
+    
+    class Meta:
+        model = IncidentAdditionalRecipients
+        fields = '__all__'
+        
+class SchMntAdditionalRecipientsSerializer(serializers.ModelSerializer):
+    createduser = serializers.SerializerMethodField()
+    def get_createduser(self, obj):
+        return get_cached_user(obj.createduser_id)
+    
+    
+    class Meta:
+        model = SchMntAdditionalRecipients
+        fields = '__all__'
+
 
 class IncidentsComponentsSerializer(serializers.ModelSerializer):
     Components = ComponentsSerializer(many=True, read_only=True)
@@ -49,6 +69,13 @@ class IncidentSerializer(serializers.ModelSerializer):
     modifieduser = serializers.SerializerMethodField()
     id = serializers.SerializerMethodField('get_incident_id')
     components = serializers.SerializerMethodField()
+    recipients=serializers.SerializerMethodField()
+    
+    
+    def get_recipients(self, obj):
+        recipient_obj=IncidentAdditionalRecipients.objects.filter(incident=obj,is_active=True)
+        serializer=IncidentAdditionalRecipientsSerializer(recipient_obj,many=True)
+        return serializer.data
 
     def get_createduser(self, obj):
         return get_cached_user(obj.createduser_id)
@@ -145,11 +172,25 @@ class IncidentSerializer(serializers.ModelSerializer):
                         createduser_id=user.user_id,
                         modifieduser_id=user.user_id,
                         created_datetime=datetime.now(),
-                        modified_datetime=datetime.now()))
+                        modified_datetime=datetime.now(),
+                        impact_severity=l_incident.impact_severity,
+                        acer_number=l_incident.acer_number,
+                        start_time=l_incident.start_time,
+                        end_time=l_incident.end_time,
+                        issue_impact=l_incident.issue_impact))
+            recipients = self.initial_data.get('recipients', None)
+            create_recipients=[]
+            if recipients:
+                for mail in recipients:
+                    create_recipients.append(IncidentAdditionalRecipients(emil=mail,is_active=True,incident=l_incident))
+                    
+            if create_recipients:
+                IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
+                
             if l_incident_activity:
                 incident_activity_obj = IncidentsActivity.objects.bulk_create(
                     l_incident_activity)
-            # TODO
+            
             if Subscriber_list:
                 # Send Mail for the subscriber who subscribed for this components
                 subscribers_email = list(Subscribers.objects.filter(
@@ -171,7 +212,7 @@ class IncidentSerializer(serializers.ModelSerializer):
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]
+                        recipient_list=subscribers_email+[user.email]+recipients
                         # recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_incident
@@ -262,10 +303,15 @@ class SubscribersSerializer(serializers.ModelSerializer):
 class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
     components = serializers.SerializerMethodField()
+    recipients=serializers.SerializerMethodField()
     
     def get_components(self, obj):
         component_obj=Components.objects.filter(component_id__in=SchMntComponent.objects.filter(sch_inc=obj,businessunit=obj.businessunit,is_active=True).values_list('component_id',flat=True))
         serializer=ComponentsSerializer(component_obj,many=True)
+        return serializer.data
+    def get_recipients(self, obj):
+        recipient_obj=SchMntAdditionalRecipients.objects.filter(sch_inc=obj,is_active=True)
+        serializer=SchMntAdditionalRecipientsSerializer(recipient_obj,many=True)
         return serializer.data
     class Meta:
         model = ScheduledMaintenance
@@ -286,7 +332,6 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
         if not components_list:
             raise ValidationError({"Error":"Please select atleast one component"})
         l_sch_mnt = super().create(validated_data)
-        l_sch_mnt_activity = list()
         components_effected=[]
         Subscriber_list = list()
         if components_list is not None:
@@ -320,7 +365,14 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     schenddate=l_sch_mnt.schenddate,
                     createduser_id=user.pk
                 )
-                
+            # Adding additional recipients
+            recipients = self.initial_data.get('recipients', None)
+            create_recipients=[]
+            if recipients:
+                for mail in recipients:
+                    create_recipients.append(SchMntAdditionalRecipients(emil=mail,is_active=True,sch_inc=l_sch_mnt))
+            if create_recipients:
+                SchMntAdditionalRecipients.objects.bulk_create(create_recipients)   
             if Subscriber_list:
                 # Send Mail for the subscriber who subscribed for this components
                 subscribers_email = list(Subscribers.objects.filter(
@@ -342,7 +394,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                         template="scheduled_maintenance_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]
+                        recipient_list=subscribers_email+[user.email]+recipients
                         # recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         return l_sch_mnt
@@ -420,6 +472,23 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 component_obj=Components.objects.filter(component_id=cmp_sts).first()
                 components_effected.append(component_obj.component_name)
                 # need to get list of component names that are effected
+            
+            # Adding additional recipients
+            recipients = self.initial_data.get('recipients', None)
+            create_recipients=[]
+            if recipients:
+                for mail in recipients:
+                    sch_inc_emails=SchMntAdditionalRecipients.objects.filter(sch_inc=instance,email=mail).first()
+                    if not sch_inc_emails:
+                        create_recipients.append(SchMntAdditionalRecipients(emil=mail,is_active=True,sch_inc=instance))
+                    else:
+                        if not  sch_inc_emails.is_active:
+                            sch_inc_emails.is_active=True
+                            sch_inc_emails.save()
+            
+            SchMntAdditionalRecipients.objects.filter(Q(sch_inc=instance),~Q(email__in=recipients)).update(is_active=False)
+            if create_recipients:
+                SchMntAdditionalRecipients.objects.bulk_create(create_recipients)
             if Subscriber_list:
                 # Send Mail for the subscriber who subscribed for this components
                 subscribers_email = list(Subscribers.objects.filter(
@@ -441,7 +510,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                         template="scheduled_maintenance_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]
+                        recipient_list=subscribers_email+[user.email]+recipients
                         # recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
         except Exception as e:
@@ -513,3 +582,4 @@ class IncidentTemplateSerializer(serializers.ModelSerializer):
         except Exception as e:
             return e
         return instance
+    

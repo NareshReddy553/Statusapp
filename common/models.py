@@ -121,8 +121,6 @@ class Incidents(SoftDeleteModelMixin):
     modify_datetime = models.DateTimeField(auto_now=True)
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='incident_bs+')
-    # createduser_id = models.IntegerField(db_column='CREATEDUSER_ID')
-    # modifieduser_id = models.IntegerField(db_column='MODIFIEDUSER_ID')
     createduser = models.ForeignKey(
         Users,
         models.DO_NOTHING,
@@ -139,6 +137,12 @@ class Incidents(SoftDeleteModelMixin):
     )
     isdeleted = models.BooleanField(
         db_column='ISDELETED', blank=True, null=True, default=False)
+    
+    impact_severity = models.CharField(db_column='Impact Severity', max_length=100, blank=True, null=True)  
+    acer_number = models.IntegerField(db_column='ACER number', blank=True, null=True)  
+    start_time = models.DateTimeField(db_column='Start time', blank=True, null=True)  
+    end_time = models.DateTimeField(db_column='End time', blank=True, null=True)  
+    issue_impact = models.CharField(db_column='Issue Impact', max_length=250, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -294,6 +298,12 @@ class IncidentsActivity(models.Model):
         blank=True, null=True, auto_now_add=True)
     modified_datetime = models.DateTimeField(
         blank=True, null=True, auto_now_add=True)
+    
+    impact_severity = models.CharField(db_column='Impact Severity', max_length=100, blank=True, null=True)  
+    acer_number = models.IntegerField(db_column='ACER number', blank=True, null=True)  
+    start_time = models.DateTimeField(db_column='Start time', blank=True, null=True)  
+    end_time = models.DateTimeField(db_column='End time', blank=True, null=True)  
+    issue_impact = models.CharField(db_column='Issue Impact', max_length=250, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -392,3 +402,47 @@ class IncidentTemplate(models.Model):
     class Meta:
         managed = False
         db_table = 'Incident_Template'
+
+
+
+class IncidentAdditionalRecipients(models.Model):
+    inc_recipient_id = models.AutoField(primary_key=True)
+    email = models.CharField(max_length=100)
+    is_active = models.IntegerField(blank=True, null=True)
+    created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
+    incident=models.ForeignKey(
+        Incidents, on_delete=models.CASCADE, related_name='inc_recipient+')
+    class Meta:
+        managed = False
+        db_table = 'Incident_additional_recipients'
+        
+class SchMntAdditionalRecipients(models.Model):
+    sch_mnt_recipient_id = models.AutoField(primary_key=True)
+    email = models.CharField(max_length=100)
+    is_active = models.IntegerField(blank=True, null=True)
+    created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
+    sch_inc=models.ForeignKey(
+        ScheduledMaintenance, on_delete=models.CASCADE, related_name='sch_recipient+')
+
+    class Meta:
+        managed = False
+        db_table = 'sch_mnt_additional_recipients'
+        
+        
+class CommonLookups(models.Model):
+    lookup_id = models.AutoField(primary_key=True)
+    category = models.CharField(max_length=100)
+    sub_caterogy = models.CharField(max_length=100)
+    looup_name = models.CharField(max_length=100)
+    looup_value = models.CharField(max_length=100)
+    display_text = models.CharField(max_length=250)
+    businessunit_id = models.IntegerField()
+    created_datetime = models.DateTimeField(blank=True, null=True)
+    modified_datetime = models.DateTimeField(blank=True, null=True)
+    createduser_id = models.IntegerField(blank=True, null=True)
+    modifieduser_id = models.IntegerField(blank=True, null=True)
+    is_active = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'common_lookups'

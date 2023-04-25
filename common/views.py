@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from account.permissions import IsBusinessUnitUser
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, SchMntActivity, SchMntComponent, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
+from common.models import Businessunits, CommonLookups, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, SchMntActivity, SchMntComponent, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
 from account.permissions import BaseStAppPermission
 from common.serializers import IncidentSerializer, SchMntActivitySerializer
 from common.utils import component_group_order, get_components_all_list
@@ -203,3 +203,11 @@ def get_sch_mnt_component_list(request):
             components_list =[{"component_id":component}]
         return Response(components_list,status=status.HTTP_200_OK)
     return Response(components_list)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_incident_impact_list(request):
+    impact_severity=[]
+    impact_severity=CommonLookups.objects.filter(is_active=True,category='Incidents',sub_caterogy='impact_severity').values_list('looup_value',flat=True)
+    return Response(impact_severity)

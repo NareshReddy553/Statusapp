@@ -10,7 +10,7 @@ from account.utils import get_hashed_password
 from django.db.models import Q
 from django.db.models import Max
 
-from common.models import Businessunits, Components, IncidentComponent, IncidentTemplate, Incidents, IncidentsActivity, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
+from common.models import Businessunits, Components, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, IncidentsActivity, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
 from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentTemplateSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
@@ -114,15 +114,35 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         createduser_id=user.user_id,
                         modifieduser_id=user.user_id,
                         created_datetime=datetime.datetime.now(),
-                        modified_datetime=datetime.datetime.now()))
+                        modified_datetime=datetime.datetime.now(),
+                        impact_severity=l_incident.impact_severity,
+                        acer_number=l_incident.acer_number,
+                        start_time=l_incident.start_time,
+                        end_time=l_incident.end_time,
+                        issue_impact=-l_incident.issue_impact))
+            # Adding additional recipients
+            recipients = input_data.get('recipients', None)
+            create_recipients=[]
+            if recipients:
+                for mail in recipients:
+                    inc_emails=IncidentAdditionalRecipients.objects.filter(incident=l_incident,email=mail).first()
+                    if not inc_emails:
+                        create_recipients.append(IncidentAdditionalRecipients(email=mail,is_active=True,incident=l_incident))
+                    else:
+                        if not  inc_emails.is_active:
+                            inc_emails.is_active=True
+                            inc_emails.save()
+            IncidentAdditionalRecipients.objects.filter(Q(incident=l_incident),~Q(email__in=recipients)).update(is_active=False)
+            if create_recipients:
+                IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
             if inc_comp_update:
                 IncidentComponent.objects.bulk_update(
                     inc_comp_update, fields=['modify_datetime', 'is_active', ])
             if inc_comp_create:
-                inc_cmp_obj = IncidentComponent.objects.bulk_create(
+                IncidentComponent.objects.bulk_create(
                     inc_comp_create)
             if l_incident_activity:
-                incident_activity_obj = IncidentsActivity.objects.bulk_create(
+                IncidentsActivity.objects.bulk_create(
                     l_incident_activity)
             if Subscriber_list:
                 # Send Mail for the subscriber who subscribed for this components
@@ -144,7 +164,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         template="incident_email_notification1.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]
+                        recipient_list=subscribers_email+[user.email]+recipients
                         # recipient_list=["naresh.gangireddy@data-axle.com"]
                     )
             return Response(status=status.HTTP_200_OK)
