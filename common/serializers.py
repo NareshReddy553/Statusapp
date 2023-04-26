@@ -182,7 +182,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             create_recipients=[]
             if recipients:
                 for mail in recipients:
-                    create_recipients.append(IncidentAdditionalRecipients(emil=mail,is_active=True,incident=l_incident))
+                    create_recipients.append(IncidentAdditionalRecipients(email=mail,is_active=True,incident=l_incident))
                     
             if create_recipients:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
@@ -370,7 +370,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             create_recipients=[]
             if recipients:
                 for mail in recipients:
-                    create_recipients.append(SchMntAdditionalRecipients(emil=mail,is_active=True,sch_inc=l_sch_mnt))
+                    create_recipients.append(SchMntAdditionalRecipients(email=mail,is_active=True,sch_inc=l_sch_mnt))
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)   
             if Subscriber_list:
@@ -480,7 +480,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 for mail in recipients:
                     sch_inc_emails=SchMntAdditionalRecipients.objects.filter(sch_inc=instance,email=mail).first()
                     if not sch_inc_emails:
-                        create_recipients.append(SchMntAdditionalRecipients(emil=mail,is_active=True,sch_inc=instance))
+                        create_recipients.append(SchMntAdditionalRecipients(email=mail,is_active=True,sch_inc=instance))
                     else:
                         if not  sch_inc_emails.is_active:
                             sch_inc_emails.is_active=True
