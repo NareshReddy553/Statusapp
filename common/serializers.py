@@ -366,7 +366,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     createduser_id=user.pk
                 )
             # Adding additional recipients
-            recipients = self.initial_data.get('recipients', None)
+            recipients = self.initial_data.get('recipients', [])
             create_recipients=[]
             if recipients:
                 for mail in recipients:
