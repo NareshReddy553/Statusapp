@@ -122,7 +122,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         end_time=l_incident.end_time,
                         issue_impact=l_incident.issue_impact))
             # Adding additional recipients
-            recipients = input_data.get('recipients', None)
+            recipients = input_data.get('recipients', [])
             create_recipients=[]
             if recipients:
                 for mail in recipients:
