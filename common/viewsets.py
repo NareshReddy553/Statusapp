@@ -26,7 +26,8 @@ class IncidentsViewset(viewsets.ModelViewSet):
         queryset = Incidents.objects.filter(
             businessunit__businessunit_name=l_businessunit, is_active=True, isdeleted=False)
         return queryset
-
+    
+    @transaction.atomic
     @action(detail=True, methods=["put"], url_path="update_incident")
     def update_incident(self, request, pk=None):
         input_data = request.data
@@ -119,7 +120,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         acer_number=l_incident.acer_number,
                         start_time=l_incident.start_time,
                         end_time=l_incident.end_time,
-                        issue_impact=-l_incident.issue_impact))
+                        issue_impact=l_incident.issue_impact))
             # Adding additional recipients
             recipients = input_data.get('recipients', None)
             create_recipients=[]
@@ -132,7 +133,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         if not  inc_emails.is_active:
                             inc_emails.is_active=True
                             inc_emails.save()
-            IncidentAdditionalRecipients.objects.filter(Q(incident=l_incident),~Q(email__in=recipients)).update(is_active=False)
+                IncidentAdditionalRecipients.objects.filter(Q(incident=l_incident),~Q(email__in=recipients)).update(is_active=False)
             if create_recipients:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
             if inc_comp_update:
