@@ -305,6 +305,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
     components = serializers.SerializerMethodField()
     recipients=serializers.SerializerMethodField()
+    schstartdate=serializers.DateTimeField()
     
     def get_components(self, obj):
         component_obj=Components.objects.filter(component_id__in=SchMntComponent.objects.filter(sch_inc=obj,businessunit=obj.businessunit,is_active=True).values_list('component_id',flat=True))
@@ -475,7 +476,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 # need to get list of component names that are effected
             
             # Adding additional recipients
-            recipients = self.initial_data.get('recipients', None)
+            recipients = self.initial_data.get('recipients', [])
             create_recipients=[]
             if recipients:
                 for mail in recipients:
