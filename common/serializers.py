@@ -127,94 +127,95 @@ class IncidentSerializer(serializers.ModelSerializer):
         components_effected = list()
         l_incident_activity = list()
         Subscriber_list = list()
-        if components_list is not None:
+        if not components_list :
+            raise ValidationError({"Error":"Please select atleast on component"})
             # Need entry in the incident component table which incident_id and component_id with respect to business_id
-            l_inc_com_obj = [IncidentComponent(
-                incident_id=l_incident.pk,
-                component_id=cmp_sts.get('component_id'),
-                is_active=True,
-                businessunit=businessunit_qs
-            ) for cmp_sts in components_list]
-            for cmp_sts in components_list:
-                component_status_obj = ComponentsStatus.objects.filter(
-                    component_status_name=cmp_sts.get('component_status')).first()
-                # update the component status in component table
-                update_component_obj = Components.objects.filter(pk=cmp_sts.get('component_id')).first()
-                update_component_obj.component_status = component_status_obj
-                update_component_obj.modified_datetime=datetime.now()
-                update_component_obj.modifieduser=user
-                update_component_obj.save()
-                components_effected.append(update_component_obj.component_name)
-                # We have to get the component subscribers from incident created
+        l_inc_com_obj = [IncidentComponent(
+            incident_id=l_incident.pk,
+            component_id=cmp_sts.get('component_id'),
+            is_active=True,
+            businessunit=businessunit_qs
+        ) for cmp_sts in components_list]
+        for cmp_sts in components_list:
+            component_status_obj = ComponentsStatus.objects.filter(
+                component_status_name=cmp_sts.get('component_status')).first()
+            # update the component status in component table
+            update_component_obj = Components.objects.filter(pk=cmp_sts.get('component_id')).first()
+            update_component_obj.component_status = component_status_obj
+            update_component_obj.modified_datetime=datetime.now()
+            update_component_obj.modifieduser=user
+            update_component_obj.save()
+            components_effected.append(update_component_obj.component_name)
+            # We have to get the component subscribers from incident created
 
-                subcomp_obj = list(SubcriberComponent.objects.filter(
-                    component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
-                if subcomp_obj:
-                    Subscriber_list += (subcomp_obj)
+            subcomp_obj = list(SubcriberComponent.objects.filter(
+                component_id=cmp_sts.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
+            if subcomp_obj:
+                Subscriber_list += (subcomp_obj)
 
-            inc_cmp_obj = IncidentComponent.objects.bulk_create(l_inc_com_obj)
+        inc_cmp_obj = IncidentComponent.objects.bulk_create(l_inc_com_obj)
 
-            # Need entry in the incident activity table each time when we create the incident
-            if inc_cmp_obj:
-                for inc_cmp_data in inc_cmp_obj:
-                    cmp_qs = Components.objects.filter(
-                        component_id=inc_cmp_data.component_id).first()
-                    l_incident_activity.append(IncidentsActivity(
-                        incident_id=l_incident.pk,
-                        incident_name=l_incident.name,
-                        message=l_incident.message,
-                        status=l_incident.status,
-                        businessunit_id=l_incident.businessunit_id,
-                        component_id=cmp_qs.component_id,
-                        component_name=cmp_qs.component_name,
-                        component_status=cmp_qs.component_status.component_status_name,
-                        component_status_id=cmp_qs.component_status.component_status_id,
-                        createduser_id=user.user_id,
-                        modifieduser_id=user.user_id,
-                        created_datetime=datetime.now(),
-                        modified_datetime=datetime.now(),
-                        impact_severity=l_incident.impact_severity,
-                        acer_number=l_incident.acer_number,
-                        start_time=l_incident.start_time,
-                        end_time=l_incident.end_time,
-                        issue_impact=l_incident.issue_impact))
-            recipients = self.initial_data.get('recipients', None)
-            create_recipients=[]
-            if recipients:
-                for mail in recipients:
-                    create_recipients.append(IncidentAdditionalRecipients(email=mail,is_active=True,incident=l_incident))
-                    
-            if create_recipients:
-                IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
+        # Need entry in the incident activity table each time when we create the incident
+        if inc_cmp_obj:
+            for inc_cmp_data in inc_cmp_obj:
+                cmp_qs = Components.objects.filter(
+                    component_id=inc_cmp_data.component_id).first()
+                l_incident_activity.append(IncidentsActivity(
+                    incident_id=l_incident.pk,
+                    incident_name=l_incident.name,
+                    message=l_incident.message,
+                    status=l_incident.status,
+                    businessunit_id=l_incident.businessunit_id,
+                    component_id=cmp_qs.component_id,
+                    component_name=cmp_qs.component_name,
+                    component_status=cmp_qs.component_status.component_status_name,
+                    component_status_id=cmp_qs.component_status.component_status_id,
+                    createduser_id=user.user_id,
+                    modifieduser_id=user.user_id,
+                    created_datetime=datetime.now(),
+                    modified_datetime=datetime.now(),
+                    impact_severity=l_incident.impact_severity,
+                    acer_number=l_incident.acer_number,
+                    start_time=l_incident.start_time,
+                    end_time=l_incident.end_time,
+                    issue_impact=l_incident.issue_impact))
+        recipients = self.initial_data.get('recipients', [])
+        create_recipients=[]
+        if recipients:
+            for mail in recipients:
+                create_recipients.append(IncidentAdditionalRecipients(email=mail,is_active=True,incident=l_incident))
                 
-            if l_incident_activity:
-                incident_activity_obj = IncidentsActivity.objects.bulk_create(
-                    l_incident_activity)
+        if create_recipients:
+            IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
             
-            if Subscriber_list:
-                # Send Mail for the subscriber who subscribed for this components
-                subscribers_email = list(Subscribers.objects.filter(
-                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
-                if subscribers_email:
-                    l_status = str(l_incident.status).capitalize()
-                    context = {
-                        "incident_data": l_incident,
-                        "component_data": components_effected,
-                        "user": user.email,
-                        "businessunit":l_businessunit_name,
-                        "status":l_status
-                    }
-                    x = datetime.now().strftime("%x %I:%M %p")
-                    l_status = str(l_incident.status).capitalize()
-                    subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
-                    logger.info("----------sending Incident  notification to subscriber---------------")
-                    send_email(
-                        template="incident_email_notification1.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=subscribers_email+[user.email]+recipients
-                        # recipient_list=["naresh.gangireddy@data-axle.com"]
-                    )
+        if l_incident_activity:
+            incident_activity_obj = IncidentsActivity.objects.bulk_create(
+                l_incident_activity)
+        
+        if Subscriber_list:
+            # Send Mail for the subscriber who subscribed for this components
+            subscribers_email = list(Subscribers.objects.filter(
+                subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
+            if subscribers_email:
+                l_status = str(l_incident.status).capitalize()
+                context = {
+                    "incident_data": l_incident,
+                    "component_data": components_effected,
+                    "user": user.email,
+                    "businessunit":l_businessunit_name,
+                    "status":l_status
+                }
+                x = datetime.now().strftime("%x %I:%M %p")
+                l_status = str(l_incident.status).capitalize()
+                subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+                logger.info("----------sending Incident  notification to subscriber---------------")
+                send_email(
+                    template="incident_email_notification1.html",
+                    subject=subject,
+                    context_data=context,
+                    recipient_list=subscribers_email+[user.email]+recipients
+                    # recipient_list=["naresh.gangireddy@data-axle.com"]
+                )
         return l_incident
 
 
