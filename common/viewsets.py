@@ -10,7 +10,7 @@ from account.utils import get_hashed_password
 from django.db.models import Q
 from django.db.models import Max
 
-from common.models import Businessunits, Components, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, IncidentsActivity, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
+from common.models import Businessunits, Components, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, IncidentsActivity, IncidentsComponentActivitys, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
 from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentTemplateSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
 from common.utils import get_component_status
 from common.mailer import send_email
@@ -47,16 +47,31 @@ class IncidentsViewset(viewsets.ModelViewSet):
             l_incident, input_data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            l_incident_activity=IncidentsActivity.objects.create(
+                    incident_id=l_incident.pk,
+                    incident_name=l_incident.name,
+                    message=l_incident.message,
+                    status=l_incident.status,
+                    businessunit_id=l_incident.businessunit_id,
+                    createduser_id=user.user_id,
+                    modifieduser_id=user.user_id,
+                    created_datetime=datetime.datetime.now(),
+                    modified_datetime=datetime.datetime.now(),
+                    impact_severity=l_incident.impact_severity,
+                    acer_number=l_incident.acer_number,
+                    start_time=l_incident.start_time,
+                    end_time=l_incident.end_time,
+                    issue_impact=l_incident.issue_impact)
             # inc_comp_obj = IncidentComponent.objects.filter(incident=pk)
             inc_comp_update = []
             inc_comp_create = []
             component_update = []
-            l_incident_activity = []
+            l_incident_components_activity = []
             components_effected=[]
             l_datetime = datetime.datetime.now()
             if new_components:
 
-                for new_comp_obj in new_components:  # COmponets obj list
+                for new_comp_obj in new_components:  # Componets obj list
                     inc_comp_qs = IncidentComponent.objects.filter(
                         incident=pk, component=new_comp_obj.get('component_id')).first()
                     qs_component = Components.objects.get(
@@ -92,6 +107,17 @@ class IncidentsViewset(viewsets.ModelViewSet):
                     component_id=new_comp_obj.get('component_id'), businessunit=businessunit_qs, is_active=True).values_list('subscriber__subscriber_id', flat=True))
                     if subcomp_obj:
                         Subscriber_list += (subcomp_obj)
+                    
+                    l_incident_components_activity.append(IncidentsComponentActivitys(
+                        incidents_activity_id=l_incident_activity.pk,
+                        component_id=qs_component.component_id,
+                        component_name=qs_component.component_name,
+                        component_status=new_comp_obj.get('component_status'),
+                        component_status_id=l_status_id,
+                        createduser_id=user.user_id,
+                        created_datetime=datetime.datetime.now()))    
+                        
+
 
             if uncheck_components:
                 for uncheck_comp_data in uncheck_components:
@@ -101,26 +127,26 @@ class IncidentsViewset(viewsets.ModelViewSet):
             if component_update:
                 comp_obj = Components.objects.bulk_update(
                     component_update, fields=['modifieduser', 'component_status', ])
-                for comp_data in component_update:
-                    l_incident_activity.append(IncidentsActivity(
-                        incident_id=l_incident.pk,
-                        incident_name=l_incident.name,
-                        message=l_incident.message,
-                        status=l_incident.status,
-                        businessunit_id=l_incident.businessunit_id,
-                        component_id=comp_data.component_id,
-                        component_name=comp_data.component_name,
-                        component_status=comp_data.component_status.component_status_name,
-                        component_status_id=comp_data.component_status.component_status_id,
-                        createduser_id=user.user_id,
-                        modifieduser_id=user.user_id,
-                        created_datetime=datetime.datetime.now(),
-                        modified_datetime=datetime.datetime.now(),
-                        impact_severity=l_incident.impact_severity,
-                        acer_number=l_incident.acer_number,
-                        start_time=l_incident.start_time,
-                        end_time=l_incident.end_time,
-                        issue_impact=l_incident.issue_impact))
+                # for comp_data in component_update:
+                    # l_incident_activity.append(IncidentsActivity(
+                    #     incident_id=l_incident.pk,
+                    #     incident_name=l_incident.name,
+                    #     message=l_incident.message,
+                    #     status=l_incident.status,
+                    #     businessunit_id=l_incident.businessunit_id,
+                    #     component_id=comp_data.component_id,
+                    #     component_name=comp_data.component_name,
+                    #     component_status=comp_data.component_status.component_status_name,
+                    #     component_status_id=comp_data.component_status.component_status_id,
+                    #     createduser_id=user.user_id,
+                    #     modifieduser_id=user.user_id,
+                    #     created_datetime=datetime.datetime.now(),
+                    #     modified_datetime=datetime.datetime.now(),
+                    #     impact_severity=l_incident.impact_severity,
+                    #     acer_number=l_incident.acer_number,
+                    #     start_time=l_incident.start_time,
+                    #     end_time=l_incident.end_time,
+                    #     issue_impact=l_incident.issue_impact))
             # Adding additional recipients
             recipients = input_data.get('recipients', [])
             create_recipients=[]
@@ -142,9 +168,9 @@ class IncidentsViewset(viewsets.ModelViewSet):
             if inc_comp_create:
                 IncidentComponent.objects.bulk_create(
                     inc_comp_create)
-            if l_incident_activity:
-                IncidentsActivity.objects.bulk_create(
-                    l_incident_activity)
+            if l_incident_components_activity:
+                IncidentsComponentActivitys.objects.bulk_create(
+                    l_incident_components_activity)
             if Subscriber_list:
                 # Send Mail for the subscriber who subscribed for this components
                 subscribers_email = list(Subscribers.objects.filter(
@@ -172,6 +198,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+            
 
     @action(detail=True, methods=["patch"], url_path="postmorterm")
     def postmorterm_incident(self, request, pk=None):

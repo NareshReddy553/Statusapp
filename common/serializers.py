@@ -5,8 +5,9 @@ from account.services import get_cached_user
 from django.db import transaction
 from django.db.models import Q
 from account.utils import get_hashed_password, get_subscriber_hashed
+from django.utils.translation import gettext_lazy as _
 
-from common.models import Businessunits, Components, ComponentsStatus, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, SchMntAdditionalRecipients, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
+from common.models import Businessunits, Components, ComponentsStatus, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, IncidentsComponentActivitys, SchMntAdditionalRecipients, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
 from common.mailer import send_email
 from rest_framework.exceptions import ValidationError
 import logging
@@ -125,10 +126,10 @@ class IncidentSerializer(serializers.ModelSerializer):
         l_incident = super().create(validated_data)
         components_list = self.initial_data.get('components', None)
         components_effected = list()
-        l_incident_activity = list()
+        l_incident_components_activity = list()
         Subscriber_list = list()
         if not components_list :
-            raise ValidationError({"Error":"Please select atleast on component"})
+            raise ValidationError({"Error":"Please select atleast one component"})
             # Need entry in the incident component table which incident_id and component_id with respect to business_id
         l_inc_com_obj = [IncidentComponent(
             incident_id=l_incident.pk,
@@ -136,6 +137,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             is_active=True,
             businessunit=businessunit_qs
         ) for cmp_sts in components_list]
+        
         for cmp_sts in components_list:
             component_status_obj = ComponentsStatus.objects.filter(
                 component_status_name=cmp_sts.get('component_status')).first()
@@ -155,21 +157,12 @@ class IncidentSerializer(serializers.ModelSerializer):
 
         inc_cmp_obj = IncidentComponent.objects.bulk_create(l_inc_com_obj)
 
-        # Need entry in the incident activity table each time when we create the incident
-        if inc_cmp_obj:
-            for inc_cmp_data in inc_cmp_obj:
-                cmp_qs = Components.objects.filter(
-                    component_id=inc_cmp_data.component_id).first()
-                l_incident_activity.append(IncidentsActivity(
+        l_incident_activity=IncidentsActivity.objects.create(
                     incident_id=l_incident.pk,
                     incident_name=l_incident.name,
                     message=l_incident.message,
                     status=l_incident.status,
                     businessunit_id=l_incident.businessunit_id,
-                    component_id=cmp_qs.component_id,
-                    component_name=cmp_qs.component_name,
-                    component_status=cmp_qs.component_status.component_status_name,
-                    component_status_id=cmp_qs.component_status.component_status_id,
                     createduser_id=user.user_id,
                     modifieduser_id=user.user_id,
                     created_datetime=datetime.now(),
@@ -178,7 +171,23 @@ class IncidentSerializer(serializers.ModelSerializer):
                     acer_number=l_incident.acer_number,
                     start_time=l_incident.start_time,
                     end_time=l_incident.end_time,
-                    issue_impact=l_incident.issue_impact))
+                    issue_impact=l_incident.issue_impact)
+        
+        if l_incident_activity:
+            
+        # Need entry in the incident activity table each time when we create the incident
+            if inc_cmp_obj:
+                for inc_cmp_data in inc_cmp_obj:
+                    cmp_qs = Components.objects.filter(
+                        component_id=inc_cmp_data.component_id).first()
+                    l_incident_components_activity.append(IncidentsComponentActivitys(
+                        incidents_activity_id=l_incident_activity.pk,
+                        component_id=cmp_qs.component_id,
+                        component_name=cmp_qs.component_name,
+                        component_status=cmp_qs.component_status.component_status_name,
+                        component_status_id=cmp_qs.component_status.component_status_id,
+                        createduser_id=user.user_id,
+                        created_datetime=datetime.now()))
         recipients = self.initial_data.get('recipients', [])
         create_recipients=[]
         if recipients:
@@ -188,9 +197,9 @@ class IncidentSerializer(serializers.ModelSerializer):
         if create_recipients:
             IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
             
-        if l_incident_activity:
-            incident_activity_obj = IncidentsActivity.objects.bulk_create(
-                l_incident_activity)
+        if l_incident_components_activity:
+            incident_activity_obj = IncidentsComponentActivitys.objects.bulk_create(
+                l_incident_components_activity)
         
         if Subscriber_list:
             # Send Mail for the subscriber who subscribed for this components
@@ -220,11 +229,29 @@ class IncidentSerializer(serializers.ModelSerializer):
 
 
 class IncidentsActivitySerializer(serializers.ModelSerializer):
+    businessunit = BusinessUnitSerializer(required=False)
+    createduser = serializers.SerializerMethodField()
+    modifieduser = serializers.SerializerMethodField()
+    components = serializers.SerializerMethodField()
 
+    def get_components(self, obj):
+        serializer = IncidentsComponentActivitysSerializer(IncidentsComponentActivitys.objects.filter(incidents_activity_id=obj.pk), many=True)
+        return serializer.data
+    
+    def get_createduser(self, obj):
+        return get_cached_user(obj.createduser_id)
+
+    def get_modifieduser(self, obj):
+        return get_cached_user(obj.modifieduser_id)
     class Meta:
         model = IncidentsActivity
         fields = '__all__'
 
+class IncidentsComponentActivitysSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = IncidentsComponentActivitys
+        fields = '__all__'
 
 class SubscribersSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
@@ -305,7 +332,12 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
     components = serializers.SerializerMethodField()
     recipients=serializers.SerializerMethodField()
-    schstartdate=serializers.DateTimeField()
+    schstartdate=serializers.DateTimeField(error_messages = {
+        'invalid': _('This field is required')
+    })
+    schenddate=serializers.DateTimeField(error_messages = {
+        'invalid': _('This field is required')
+    })
     
     def get_components(self, obj):
         component_obj=Components.objects.filter(component_id__in=SchMntComponent.objects.filter(sch_inc=obj,businessunit=obj.businessunit,is_active=True).values_list('component_id',flat=True))

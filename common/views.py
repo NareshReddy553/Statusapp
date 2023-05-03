@@ -8,9 +8,9 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from account.permissions import IsBusinessUnitUser
 
-from common.models import Businessunits, CommonLookups, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, SchMntActivity, SchMntComponent, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
+from common.models import Businessunits, CommonLookups, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, SchMntActivity, SchMntComponent, ScheduledMaintenance, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
 from account.permissions import BaseStAppPermission
-from common.serializers import IncidentSerializer, SchMntActivitySerializer
+from common.serializers import IncidentSerializer, IncidentsActivitySerializer, SchMntActivitySerializer, ScheduledMaintanenceSerializer
 from common.utils import component_group_order, get_components_all_list
 
 # Create your views here.
@@ -112,10 +112,28 @@ def get_status_page_incidents(request):
     start_date=datetime.datetime.now()
     end_date=start_date-relativedelta(months=3)
     l_businessunit =request.headers.get('businessunit')
-    queryset = Incidents.objects.filter(
-        businessunit__businessunit_name=l_businessunit, is_active=True, isdeleted=False,modify_datetime__gte=end_date)
+    queryset = IncidentsActivity.objects.filter(
+        businessunit__businessunit_name=l_businessunit, incident__is_active=True, incident__isdeleted=False,created_datetime__gte=end_date)
 
-    serializer=IncidentSerializer(queryset,many=True)
+    serializer=IncidentsActivitySerializer(queryset,many=True)
+    if serializer:
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
+        
+@api_view(["GET"])
+def get_status_page_sch_mnt_incidents(request):
+    """
+        This api is used to get the all the scheduled maintenance incident with in the time period of 3 months
+    """
+    start_date=datetime.datetime.now()
+    end_date=start_date-relativedelta(months=3)
+    l_businessunit =request.headers.get('businessunit')
+    queryset = SchMntActivity.objects.filter(
+        sch_inc__businessunit__businessunit_name=l_businessunit, sch_inc__is_active=True,created_datetime__gte=end_date)
+
+    serializer=SchMntActivitySerializer(queryset,many=True)
     if serializer:
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:

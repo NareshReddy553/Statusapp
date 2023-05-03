@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from django.urls.conf import path
 from rest_framework import routers
-from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_scheduled_maintenance_activity_list, get_sidebar_list, Mytemplates,get_status_page_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count,get_subscribers_component_list,get_sch_mnt_component_list,get_incident_impact_list
+from common.views import get_businessunits, get_components_list, get_dashboard_incident_component_status, get_scheduled_maintenance_activity_list, get_sidebar_list, Mytemplates,get_status_page_incidents, get_status_page_sch_mnt_incidents, get_statuspage_components_list,get_network_lists,subsciber_type_count,get_subscribers_component_list,get_sch_mnt_component_list,get_incident_impact_list
 
 from common.viewsets import ComponentsViewset, IncidentTemplateViewset, IncidentsActivityViewset, IncidentsViewset, ScheduledMaintanenceViewset, SubscribersViewset
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path(r'sidebar', get_sidebar_list),
     path(r'dashboard_incident', get_dashboard_incident_component_status),
     path(r'status_page_incidents',get_status_page_incidents),
+    path(r'scheduled_maintanence/status_page_sch_mnt_inc',get_status_page_sch_mnt_incidents),
     path('networks',get_network_lists),
     path("subscribers/subsciberscount",subsciber_type_count),
     path(r'subscribers/subscribercomponent',get_subscribers_component_list),

@@ -138,11 +138,11 @@ class Incidents(SoftDeleteModelMixin):
     isdeleted = models.BooleanField(
         db_column='ISDELETED', blank=True, null=True, default=False)
     
-    impact_severity = models.CharField(db_column='Impact Severity', max_length=100, blank=True, null=True)  
-    acer_number = models.IntegerField(db_column='ACER number', blank=True, null=True)  
+    impact_severity = models.CharField(db_column='Impact Severity', max_length=100)  
+    acer_number = models.IntegerField(db_column='ACER number')  
     start_time = models.DateTimeField(db_column='Start time', blank=True, null=True)  
     end_time = models.DateTimeField(db_column='End time', blank=True, null=True)  
-    issue_impact = models.CharField(db_column='Issue Impact', max_length=250, blank=True, null=True)
+    issue_impact = models.CharField(db_column='Issue Impact', max_length=250)
 
     class Meta:
         managed = False
@@ -283,11 +283,14 @@ class Sidebar(models.Model):
 
 class IncidentsActivity(models.Model):
     incidents_activity_id = models.AutoField(primary_key=True)
-    incident_id = models.IntegerField()
+    # incident_id = models.IntegerField()
+    incident = models.ForeignKey(
+        Incidents, on_delete=models.CASCADE, related_name='inc_act')
     incident_name = models.CharField(max_length=250, blank=True, null=True)
     message = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=25, blank=True, null=True)
-    businessunit_id = models.IntegerField()
+    businessunit = models.ForeignKey(
+        Businessunits, on_delete=models.CASCADE, related_name='inc_act_business')
     component_id = models.IntegerField()
     component_name = models.CharField(max_length=100, blank=True, null=True)
     component_status = models.CharField(max_length=100, blank=True, null=True)
@@ -299,16 +302,32 @@ class IncidentsActivity(models.Model):
     modified_datetime = models.DateTimeField(
         blank=True, null=True, auto_now_add=True)
     
-    impact_severity = models.CharField(db_column='Impact Severity', max_length=100, blank=True, null=True)  
-    acer_number = models.IntegerField(db_column='ACER number', blank=True, null=True)  
+    impact_severity = models.CharField(db_column='Impact Severity', max_length=100)  
+    acer_number = models.IntegerField(db_column='ACER number')  
     start_time = models.DateTimeField(db_column='Start time', blank=True, null=True)  
     end_time = models.DateTimeField(db_column='End time', blank=True, null=True)  
-    issue_impact = models.CharField(db_column='Issue Impact', max_length=250, blank=True, null=True)
+    issue_impact = models.CharField(db_column='Issue Impact', max_length=250)
 
     class Meta:
         managed = False
         db_table = 'incidents_activity'
+        ordering=['-incident_id','-modified_datetime']
 
+
+class IncidentsComponentActivitys(models.Model):
+    incident_component_act_id = models.AutoField(primary_key=True)
+    component_id = models.IntegerField(blank=True, null=True)
+    createduser_id = models.IntegerField(blank=True, null=True)
+    created_datetime = models.DateTimeField(blank=True, null=True)
+    incidents_activity_id = models.IntegerField(blank=True, null=True)
+    component_name = models.CharField(max_length=100, blank=True, null=True)
+    component_status = models.CharField(max_length=100, blank=True, null=True)
+    component_status_id = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'Incidents_component_activitys'
+        
 class Smsgateway(models.Model):
     network_id = models.AutoField(db_column='NETWORK_ID', primary_key=True)
     network = models.CharField(db_column='NETWORK', unique=True, max_length=100)
@@ -325,8 +344,8 @@ class ScheduledMaintenance(models.Model):
     name = models.CharField(max_length=250, blank=True, null=True)
     message = models.CharField(max_length=2000, blank=True, null=True)
     is_active = models.BooleanField(blank=True, null=True,default=True)
-    schstartdate = models.DateTimeField(db_column='schStartDate') 
-    schenddate = models.DateTimeField(db_column='schEndDate') 
+    schstartdate = models.DateTimeField(db_column='schStartDate',blank=False,null=False) 
+    schenddate = models.DateTimeField(db_column='schEndDate',blank=False,null=False) 
     is_done = models.BooleanField(blank=True, null=True,default=False)
     auto_complete = models.BooleanField(blank=True, null=True,default=False)
     created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
@@ -334,6 +353,7 @@ class ScheduledMaintenance(models.Model):
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='sch_mnt_business')
     status = models.CharField(max_length=100, blank=True, null=True,default='Scheduled')
+    impact_update=models.CharField(max_length=1000)
 
     class Meta:
         managed = False
@@ -366,12 +386,15 @@ class SchMntActivity(models.Model):
     schenddate = models.DateTimeField(db_column='schEndDate', blank=True, null=True)  
     createduser_id = models.IntegerField(blank=True, null=True)
     created_datetime = models.DateTimeField(blank=True, null=True,auto_now_add=True)
-    sch_inc_id = models.IntegerField()
+    # sch_inc_id = models.IntegerField()
+    sch_inc = models.ForeignKey(
+        ScheduledMaintenance, on_delete=models.CASCADE, related_name='sch_mnt_inc+')
+    impact_update=models.CharField(max_length=1000)
 
     class Meta:
         managed = False
         db_table = 'Sch_mnt_activity'
-        ordering = ['-created_datetime']
+        ordering = ['-sch_inc_id','-created_datetime']
 
 
 class IncidentTemplate(models.Model):
