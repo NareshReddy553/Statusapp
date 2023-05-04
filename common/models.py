@@ -319,6 +319,7 @@ class IncidentsComponentActivitys(models.Model):
     component_name = models.CharField(max_length=100, blank=True, null=True)
     component_status = models.CharField(max_length=100, blank=True, null=True)
     component_status_id = models.IntegerField(blank=True, null=True)
+    incident_id=models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False

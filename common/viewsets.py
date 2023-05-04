@@ -115,7 +115,8 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         component_status=new_comp_obj.get('component_status'),
                         component_status_id=l_status_id,
                         createduser_id=user.user_id,
-                        created_datetime=datetime.datetime.now()))    
+                        created_datetime=datetime.datetime.now(),
+                        incident_id=l_incident.pk))    
                         
 
 

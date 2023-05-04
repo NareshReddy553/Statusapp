@@ -94,11 +94,9 @@ class IncidentSerializer(serializers.ModelSerializer):
         if inc_comp_obj:
             for data_obj in inc_comp_obj:
                 temp_dict = {}
-                last_component_status = IncidentsActivity.objects.filter(
-                    incident_id=obj.pk).values_list('incidents_activity_id',flat=True)
-                
-                l_last_component_status=IncidentsComponentActivitys.objects.filter(incidents_activity_id__in=last_component_status).order_by('-created_datetime')
-                
+                l_last_component_status=None
+                if obj.status=='resolved':
+                    l_last_component_status=IncidentsComponentActivitys.objects.filter(incident_id=obj.pk,component_id=data_obj.component.component_id).order_by('-created_datetime')
                 if data_obj.component.is_active:
                     temp_dict['component_id'] = data_obj.component.component_id
                     temp_dict['component_name'] = data_obj.component.component_name
@@ -189,7 +187,8 @@ class IncidentSerializer(serializers.ModelSerializer):
                         component_status=cmp_qs.component_status.component_status_name,
                         component_status_id=cmp_qs.component_status.component_status_id,
                         createduser_id=user.user_id,
-                        created_datetime=datetime.now()))
+                        created_datetime=datetime.now(),
+                        incident_id=l_incident.pk))
         recipients = self.initial_data.get('recipients', [])
         create_recipients=[]
         if recipients:
