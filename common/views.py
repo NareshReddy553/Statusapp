@@ -10,7 +10,7 @@ from account.permissions import IsBusinessUnitUser
 
 from common.models import Businessunits, CommonLookups, Components, ComponentsStatus, IncidentComponent, Incidents, IncidentsActivity, SchMntActivity, SchMntComponent, ScheduledMaintenance, Sidebar, Smsgateway, SubcriberComponent, Subscribers, UserBusinessunits
 from account.permissions import BaseStAppPermission
-from common.serializers import IncidentSerializer, IncidentsActivitySerializer, SchMntActivitySerializer, ScheduledMaintanenceSerializer
+from common.serializers import IncidentSerializer, IncidentsActivitySerializer, SchMntActivitySerializer, ScheduledMaintanenceSerializer, StatusPageIncidentsSerializer
 from common.utils import component_group_order, get_components_all_list
 
 # Create your views here.
@@ -112,10 +112,11 @@ def get_status_page_incidents(request):
     start_date=datetime.datetime.now()
     end_date=start_date-relativedelta(months=3)
     l_businessunit =request.headers.get('businessunit')
-    queryset = IncidentsActivity.objects.filter(
-        businessunit__businessunit_name=l_businessunit, incident__is_active=True, incident__isdeleted=False,created_datetime__gte=end_date)
-
-    serializer=IncidentsActivitySerializer(queryset,many=True)
+    # queryset = IncidentsActivity.objects.filter(
+    #     businessunit__businessunit_name=l_businessunit, incident__is_active=True, incident__isdeleted=False,created_datetime__gte=end_date)
+    incident_qs=Incidents.objects.filter(
+        businessunit__businessunit_name=l_businessunit, is_active=True, isdeleted=False,created_datetime__gte=end_date)
+    serializer=StatusPageIncidentsSerializer(incident_qs,many=True)
     if serializer:
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:

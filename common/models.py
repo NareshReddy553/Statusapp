@@ -291,10 +291,6 @@ class IncidentsActivity(models.Model):
     status = models.CharField(max_length=25, blank=True, null=True)
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='inc_act_business')
-    component_id = models.IntegerField()
-    component_name = models.CharField(max_length=100, blank=True, null=True)
-    component_status = models.CharField(max_length=100, blank=True, null=True)
-    component_status_id = models.IntegerField()
     createduser_id = models.IntegerField(blank=True, null=True)
     modifieduser_id = models.IntegerField(blank=True, null=True)
     created_datetime = models.DateTimeField(

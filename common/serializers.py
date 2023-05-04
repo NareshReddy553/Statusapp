@@ -246,7 +246,26 @@ class IncidentsActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = IncidentsActivity
         fields = '__all__'
+class StatusPageIncidentsActivitySerializer(serializers.ModelSerializer):
+    components = serializers.SerializerMethodField()
 
+    def get_components(self, obj):
+        serializer = IncidentsComponentActivitysSerializer(IncidentsComponentActivitys.objects.filter(incidents_activity_id=obj.pk), many=True)
+        return serializer.data
+    
+    class Meta:
+        model = IncidentsActivity
+        fields = '__all__'
+        
+class StatusPageIncidentsSerializer(serializers.ModelSerializer):
+    activity_history=serializers.SerializerMethodField()
+    def get_activity_history(self,obj):
+        serializer = StatusPageIncidentsActivitySerializer(IncidentsActivity.objects.filter(incident=obj), many=True)
+        return serializer.data
+        
+    class Meta:
+        model = Incidents
+        fields = '__all__'
 class IncidentsComponentActivitysSerializer(serializers.ModelSerializer):
     
     class Meta:
