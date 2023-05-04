@@ -94,9 +94,11 @@ class IncidentSerializer(serializers.ModelSerializer):
         if inc_comp_obj:
             for data_obj in inc_comp_obj:
                 temp_dict = {}
-                l_last_component_status = IncidentsActivity.objects.filter(
-                    incident_id=obj.pk, component_id=data_obj.component.component_id).order_by('-modified_datetime')
-
+                last_component_status = IncidentsActivity.objects.filter(
+                    incident_id=obj.pk).values_list('incidents_activity_id',flat=True)
+                
+                l_last_component_status=IncidentsComponentActivitys.objects.filter(incidents_activity_id__in=last_component_status).order_by('-created_datetime')
+                
                 if data_obj.component.is_active:
                     temp_dict['component_id'] = data_obj.component.component_id
                     temp_dict['component_name'] = data_obj.component.component_name
