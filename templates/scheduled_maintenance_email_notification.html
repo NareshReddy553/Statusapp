@@ -478,7 +478,9 @@
                                             >
                                                 200 West Adams St., Suite 1400, Chicago Illinois 60606, United States <br />
                                                 <br />
-                                                Unsubscribe: Reply to this message with "unsubscribe" in the subject line to be removed from our database.
+                                                {% if unsubscribe_url %}
+                                                To unsubscribe please click on <a href={{ unsubscribe_url }} target="_blank"  title="">unsubscribe<br><br></a>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     </table>

@@ -8,7 +8,7 @@ from account.utils import get_hashed_password, get_subscriber_hashed
 from django.utils.translation import gettext_lazy as _
 
 from common.models import Businessunits, Components, ComponentsStatus, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, IncidentsComponentActivitys, SchMntAdditionalRecipients, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, IncidentsActivity, Subscribers,SchMntActivity
-from common.mailer import send_email
+from common.mailer import send_email, send_mass_mail
 from rest_framework.exceptions import ValidationError
 import logging
 
@@ -203,29 +203,43 @@ class IncidentSerializer(serializers.ModelSerializer):
                 l_incident_components_activity)
         
         if Subscriber_list:
-            # Send Mail for the subscriber who subscribed for this components
+                
+            l_mass_email=[]
             subscribers_email = list(Subscribers.objects.filter(
-                subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
-            if subscribers_email:
-                l_status = str(l_incident.status).capitalize()
-                context = {
-                    "incident_data": l_incident,
-                    "component_data": components_effected,
-                    "user": user.email,
-                    "businessunit":l_businessunit_name,
-                    "status":l_status
-                }
-                x = datetime.now().strftime("%x %I:%M %p")
-                l_status = str(l_incident.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
-                logger.info("----------sending Incident  notification to subscriber---------------")
-                send_email(
-                    template="incident_email_notification1.html",
+                subscriber_id__in=Subscriber_list).values_list('email','subscriber_token'))
+            l_status = str(l_incident.status).capitalize()
+            context = {
+                "incident_data": l_incident,
+                "component_data": components_effected,
+                "user": user.email,
+                "businessunit":l_businessunit_name,
+                "status":l_status
+            }
+            # x = datetime.now().strftime("%x %I:%M %p")
+            l_status = str(l_incident.status).capitalize()
+            subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+            
+            for email,token in subscribers_email:
+                context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
+                l_mass_email.append(send_email(
+                    template="incident_email_notification.html",
                     subject=subject,
                     context_data=context,
-                    recipient_list=subscribers_email+[user.email]+recipients
-                    # recipient_list=["naresh.gangireddy@data-axle.com"]
-                )
+                    recipient_list=[email]
+                ))
+            
+            l_mass_email.append(send_email(
+                template="incident_email_notification.html",
+                subject=subject,
+                context_data=context,
+                recipient_list=[user.email]+recipients
+            ))
+            
+            try:
+                send_mass_mail(l_mass_email) 
+            except Exception as e:
+                print(e)    
+        
         return l_incident
 
 
@@ -277,7 +291,6 @@ class SubscribersSerializer(serializers.ModelSerializer):
     businessunit = BusinessUnitSerializer(required=False)
     components=serializers.SerializerMethodField()
     
-    
     def get_components(self,obj):
         component_obj=Components.objects.filter(component_id__in=SubcriberComponent.objects.filter(subscriber_id=obj.subscriber_id,businessunit=obj.businessunit,is_active=True).values_list('component_id',flat=True))
         serializer=ComponentsSerializer(component_obj,many=True)
@@ -328,6 +341,7 @@ class SubscribersSerializer(serializers.ModelSerializer):
         subscribers_email=[instance.email]
         businessunit_name=l_businessunit_name
         if subscribers_email:
+            l_mass_email=[]
             context = {
                 "subscriber": instance,
                 "businessunit":l_businessunit_name,
@@ -339,12 +353,13 @@ class SubscribersSerializer(serializers.ModelSerializer):
             x = datetime.now().strftime("%x %I:%M %p")
             subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
             logger.info("sending notification to subscribers ")
-            send_email(
-                template="test_subscriber.html",
+            l_mass_email.append(send_email(
+                template="subscriber_email_notification.html",
                 subject=subject,
                 context_data=context,
                 recipient_list=subscribers_email,
-            )
+            ))
+            send_mass_mail(l_mass_email)
         return instance
     
     
@@ -428,29 +443,41 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)   
             if Subscriber_list:
-                # Send Mail for the subscriber who subscribed for this components
+                
+                l_mass_email=[]
                 subscribers_email = list(Subscribers.objects.filter(
-                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
-                if subscribers_email:
-                    l_status = str(l_sch_mnt.status).capitalize()
-                    context = {
+                    subscriber_id__in=Subscriber_list).values_list('email','subscriber_token'))
+                l_status = str(l_sch_mnt.status).capitalize()
+                context = {
                         "incident_data": l_sch_mnt,
                         "component_data": components_effected,
                         "user": user.email,
                         "businessunit":l_businessunit_name,
                         "status":l_status
-                    }
-                    x = datetime.now().strftime("%x %I:%M %p")
-                    l_status = str(l_sch_mnt.status).capitalize()
-                    subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
-                    logger.info("----------sending Incident  notification to subscriber---------------")
-                    send_email(
+                }
+                # x = datetime.now().strftime("%x %I:%M %p")
+                l_status = str(l_sch_mnt.status).capitalize()
+                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
+                for email,token in subscribers_email:
+                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
+                    l_mass_email.append(send_email(
                         template="scheduled_maintenance_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]+recipients
-                        # recipient_list=["naresh.gangireddy@data-axle.com"]
-                    )
+                        recipient_list=[email]
+                    ))
+                
+                l_mass_email.append(send_email(
+                    template="scheduled_maintenance_email_notification.html",
+                    subject=subject,
+                    context_data=context,
+                    recipient_list=[user.email]+recipients
+                ))
+                
+                try:
+                    send_mass_mail(l_mass_email) 
+                except Exception as e:
+                    print(e)    
         return l_sch_mnt
     
     @transaction.atomic
@@ -544,29 +571,41 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)
             if Subscriber_list:
-                # Send Mail for the subscriber who subscribed for this components
+                
+                l_mass_email=[]
                 subscribers_email = list(Subscribers.objects.filter(
-                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
-                if subscribers_email:
-                    l_status = str(instance.status).capitalize()
-                    context = {
-                        "incident_data": instance,
-                        "component_data": components_effected,
-                        "user": user.email,
-                        "businessunit":l_businessunit_name,
-                        "status":l_status
-                    }
-                    x = datetime.now().strftime("%x %I:%M %p")
-                    l_status = str(instance.status).capitalize()
-                    subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
-                    logger.info("----------sending Incident  notification to subscriber---------------")
-                    send_email(
+                    subscriber_id__in=Subscriber_list).values_list('email','subscriber_token'))
+                l_status = str(instance.status).capitalize()
+                context = {
+                    "incident_data": instance,
+                    "component_data": components_effected,
+                    "user": user.email,
+                    "businessunit":l_businessunit_name,
+                    "status":l_status
+                }
+                x = datetime.now().strftime("%x %I:%M %p")
+                l_status = str(instance.status).capitalize()
+                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
+                for email,token in subscribers_email:
+                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
+                    l_mass_email.append(send_email(
                         template="scheduled_maintenance_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]+recipients
-                        # recipient_list=["naresh.gangireddy@data-axle.com"]
-                    )
+                        recipient_list=[email]
+                    ))
+                
+                l_mass_email.append(send_email(
+                    template="scheduled_maintenance_email_notification.html",
+                    subject=subject,
+                    context_data=context,
+                    recipient_list=[user.email]+recipients
+                ))
+                
+                try:
+                    send_mass_mail(l_mass_email) 
+                except Exception as e:
+                    print(e)
         except Exception as e:
             return e
         return instance

@@ -13,7 +13,7 @@ from django.db.models import Max
 from common.models import Businessunits, Components, IncidentAdditionalRecipients, IncidentComponent, IncidentTemplate, Incidents, IncidentsActivity, IncidentsComponentActivitys, SchMntComponent, ScheduledMaintenance, Smsgateway, SubcriberComponent, Subscribers,ComponentsStatus
 from common.serializers import ComponentsSerializer, IncidentSerializer, IncidentTemplateSerializer, IncidentsActivitySerializer, ScheduledMaintanenceSerializer, SubscribersSerializer
 from common.utils import get_component_status
-from common.mailer import send_email
+from common.mailer import send_email, send_mass_mail
 from django.db import transaction
 
 
@@ -118,8 +118,6 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         created_datetime=datetime.datetime.now(),
                         incident_id=l_incident.pk))    
                         
-
-
             if uncheck_components:
                 for uncheck_comp_data in uncheck_components:
                     IncidentComponent.objects.filter(incident_id=pk, component_id=uncheck_comp_data['component_id']).update(
@@ -128,26 +126,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
             if component_update:
                 comp_obj = Components.objects.bulk_update(
                     component_update, fields=['modifieduser', 'component_status', ])
-                # for comp_data in component_update:
-                    # l_incident_activity.append(IncidentsActivity(
-                    #     incident_id=l_incident.pk,
-                    #     incident_name=l_incident.name,
-                    #     message=l_incident.message,
-                    #     status=l_incident.status,
-                    #     businessunit_id=l_incident.businessunit_id,
-                    #     component_id=comp_data.component_id,
-                    #     component_name=comp_data.component_name,
-                    #     component_status=comp_data.component_status.component_status_name,
-                    #     component_status_id=comp_data.component_status.component_status_id,
-                    #     createduser_id=user.user_id,
-                    #     modifieduser_id=user.user_id,
-                    #     created_datetime=datetime.datetime.now(),
-                    #     modified_datetime=datetime.datetime.now(),
-                    #     impact_severity=l_incident.impact_severity,
-                    #     acer_number=l_incident.acer_number,
-                    #     start_time=l_incident.start_time,
-                    #     end_time=l_incident.end_time,
-                    #     issue_impact=l_incident.issue_impact))
+                
             # Adding additional recipients
             recipients = input_data.get('recipients', [])
             create_recipients=[]
@@ -173,28 +152,43 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 IncidentsComponentActivitys.objects.bulk_create(
                     l_incident_components_activity)
             if Subscriber_list:
-                # Send Mail for the subscriber who subscribed for this components
+                
+                l_mass_email=[]
                 subscribers_email = list(Subscribers.objects.filter(
-                    subscriber_id__in=Subscriber_list).values_list('email',  flat=True))
-                if subscribers_email:
-                    l_status = str(l_incident.status).capitalize()
-                    context = {
-                        "incident_data": l_incident,
-                        "component_data": components_effected,
-                        "user": user.email,
-                        "businessunit":l_businessunit_name,
-                        "status":l_status
-                    }
-                    x = datetime.datetime.now().strftime("%x %I:%M %p")
-                    l_status = str(l_incident.status).capitalize()
-                    subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
-                    send_email(
-                        template="incident_email_notification1.html",
+                    subscriber_id__in=Subscriber_list).values_list('email','subscriber_token'))
+                l_status = str(l_incident.status).capitalize()
+                context = {
+                    "incident_data": l_incident,
+                    "component_data": components_effected,
+                    "user": user.email,
+                    "businessunit":l_businessunit_name,
+                    "status":l_status
+                }
+                # x = datetime.now().strftime("%x %I:%M %p")
+                l_status = str(l_incident.status).capitalize()
+                subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+                
+                for email,token in subscribers_email:
+                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
+                    l_mass_email.append(send_email(
+                        template="incident_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=subscribers_email+[user.email]+recipients
-                        # recipient_list=["naresh.gangireddy@data-axle.com"]
-                    )
+                        recipient_list=[email]
+                    ))
+                
+                l_mass_email.append(send_email(
+                    template="incident_email_notification.html",
+                    subject=subject,
+                    context_data=context,
+                    recipient_list=[user.email]+recipients
+                ))
+                
+                try:
+                    send_mass_mail(l_mass_email) 
+                except Exception as e:
+                    print(e)
+                    
             return Response(status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors,

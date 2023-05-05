@@ -287,7 +287,7 @@ class IncidentsActivity(models.Model):
     incident = models.ForeignKey(
         Incidents, on_delete=models.CASCADE, related_name='inc_act')
     incident_name = models.CharField(max_length=250, blank=True, null=True)
-    message = models.TextField(blank=True, null=True)
+    message = models.CharField(max_length=2000, blank=True, null=True)
     status = models.CharField(max_length=25, blank=True, null=True)
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='inc_act_business')
@@ -350,7 +350,7 @@ class ScheduledMaintenance(models.Model):
     businessunit = models.ForeignKey(
         Businessunits, on_delete=models.CASCADE, related_name='sch_mnt_business')
     status = models.CharField(max_length=100, blank=True, null=True,default='Scheduled')
-    impact_update=models.CharField(max_length=1000)
+    impact_update=models.CharField(max_length=1000,blank=True, null=True)
 
     class Meta:
         managed = False
