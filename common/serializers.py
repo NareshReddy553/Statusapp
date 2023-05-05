@@ -219,6 +219,13 @@ class IncidentSerializer(serializers.ModelSerializer):
             l_status = str(l_incident.status).capitalize()
             subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
             
+            l_mass_email.append(send_email(
+                template="incident_email_notification.html",
+                subject=subject,
+                context_data=context,
+                recipient_list=[user.email]+recipients
+            ))
+            
             for email,token in subscribers_email:
                 context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
                 l_mass_email.append(send_email(
@@ -228,17 +235,7 @@ class IncidentSerializer(serializers.ModelSerializer):
                     recipient_list=[email]
                 ))
             
-            l_mass_email.append(send_email(
-                template="incident_email_notification.html",
-                subject=subject,
-                context_data=context,
-                recipient_list=[user.email]+recipients
-            ))
-            
-            try:
-                send_mass_mail(l_mass_email) 
-            except Exception as e:
-                print(e)    
+            send_mass_mail(l_mass_email)
         
         return l_incident
 
@@ -359,7 +356,9 @@ class SubscribersSerializer(serializers.ModelSerializer):
                 context_data=context,
                 recipient_list=subscribers_email,
             ))
+            
             send_mass_mail(l_mass_email)
+            
         return instance
     
     
@@ -458,14 +457,6 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 # x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(l_sch_mnt.status).capitalize()
                 subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
-                for email,token in subscribers_email:
-                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
-                    l_mass_email.append(send_email(
-                        template="scheduled_maintenance_email_notification.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=[email]
-                    ))
                 
                 l_mass_email.append(send_email(
                     template="scheduled_maintenance_email_notification.html",
@@ -474,10 +465,17 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     recipient_list=[user.email]+recipients
                 ))
                 
-                try:
-                    send_mass_mail(l_mass_email) 
-                except Exception as e:
-                    print(e)    
+                for email,token in subscribers_email:
+                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
+                    l_mass_email.append(send_email(
+                        template="scheduled_maintenance_email_notification.html",
+                        subject=subject,
+                        context_data=context,
+                        recipient_list=[email]
+                    ))
+                    
+                send_mass_mail(l_mass_email) 
+                
         return l_sch_mnt
     
     @transaction.atomic
@@ -586,14 +584,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(instance.status).capitalize()
                 subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
-                for email,token in subscribers_email:
-                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
-                    l_mass_email.append(send_email(
-                        template="scheduled_maintenance_email_notification.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=[email]
-                    ))
+                
                 
                 l_mass_email.append(send_email(
                     template="scheduled_maintenance_email_notification.html",
@@ -602,10 +593,17 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     recipient_list=[user.email]+recipients
                 ))
                 
-                try:
-                    send_mass_mail(l_mass_email) 
-                except Exception as e:
-                    print(e)
+                for email,token in subscribers_email:
+                    context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
+                    l_mass_email.append(send_email(
+                        template="scheduled_maintenance_email_notification.html",
+                        subject=subject,
+                        context_data=context,
+                        recipient_list=[email]
+                    ))
+                    
+                send_mass_mail(l_mass_email)
+                    
         except Exception as e:
             return e
         return instance

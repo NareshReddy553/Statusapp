@@ -168,6 +168,13 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 l_status = str(l_incident.status).capitalize()
                 subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
                 
+                l_mass_email.append(send_email(
+                    template="incident_email_notification.html",
+                    subject=subject,
+                    context_data=context,
+                    recipient_list=[user.email]+recipients
+                ))
+                                
                 for email,token in subscribers_email:
                     context["unsubscribe_url"]="http://18.118.80.163/Status/"+l_businessunit_name+'/unsubscribe/'+token
                     l_mass_email.append(send_email(
@@ -177,17 +184,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         recipient_list=[email]
                     ))
                 
-                l_mass_email.append(send_email(
-                    template="incident_email_notification.html",
-                    subject=subject,
-                    context_data=context,
-                    recipient_list=[user.email]+recipients
-                ))
-                
-                try:
-                    send_mass_mail(l_mass_email) 
-                except Exception as e:
-                    print(e)
+                send_mass_mail(l_mass_email) 
                     
             return Response(status=status.HTTP_200_OK)
         else:
