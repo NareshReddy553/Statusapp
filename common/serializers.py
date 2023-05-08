@@ -160,7 +160,7 @@ class IncidentSerializer(serializers.ModelSerializer):
         l_incident_activity=IncidentsActivity.objects.create(
                     incident_id=l_incident.pk,
                     incident_name=l_incident.name,
-                    message=l_incident.message,
+                    message=str(l_incident.message),
                     status=l_incident.status,
                     businessunit_id=l_incident.businessunit_id,
                     createduser_id=user.user_id,
@@ -260,6 +260,11 @@ class IncidentsActivitySerializer(serializers.ModelSerializer):
         fields = '__all__'
 class StatusPageIncidentsActivitySerializer(serializers.ModelSerializer):
     components = serializers.SerializerMethodField()
+    incident_message=serializers.SerializerMethodField()
+    
+    def get_incident_message(self,obj):
+        msg=obj.message.decode('utf-8')
+        return msg
 
     def get_components(self, obj):
         serializer = IncidentsComponentActivitysSerializer(IncidentsComponentActivitys.objects.filter(incidents_activity_id=obj.pk), many=True)
