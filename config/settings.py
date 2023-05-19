@@ -266,8 +266,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 JWT_AUTH = {
-    "JWT_EXPIRATION_DELTA": timedelta(minutes=2),
-    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(minutes=1),
+    "JWT_EXPIRATION_DELTA": timedelta(minutes=30),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(minutes=15),
     "JWT_ALLOW_REFRESH": True,
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
 }

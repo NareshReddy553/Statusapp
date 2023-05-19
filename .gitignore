@@ -7,3 +7,15 @@ databasename.db3
 lib
 libclntsh.dylib
 migrations
+
+*.log
+
+*.pot
+
+*.pyc
+
+*/*/*/__pycache__/
+
+*/*/__pycache__/
+
+*/__pycache__/
