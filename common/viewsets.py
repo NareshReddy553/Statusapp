@@ -29,6 +29,7 @@ from common.models import (
     Subscribers,
 )
 from common.serializers import (
+    BusinessUnitSerializer,
     ComponentsSerializer,
     IncidentsActivitySerializer,
     IncidentSerializer,
@@ -37,6 +38,30 @@ from common.serializers import (
     SubscribersSerializer,
 )
 from common.utils import get_component_status
+
+
+class BusinessunitViewset(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    queryset = Businessunits.objects.all()
+    serializer_class = BusinessUnitSerializer
+
+    @transaction.atomic
+    @action(detail=True, methods=["patch"], url_path="inactive_businessunit")
+    def inactive_businessunit(self, request, pk=None):
+        user = Users.objects.get(email=request.user.username)
+        try:
+            businessunit_obj = self.get_object()
+            businessunit_obj.modifieduser = user
+            serializer = self.serializer_class(
+                businessunit_obj, request.data, partial=True
+            )
+            if serializer.is_valid():
+                serializer.save()
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
 class IncidentsViewset(viewsets.ModelViewSet):
@@ -860,7 +885,7 @@ class SubscribersViewset(viewsets.ModelViewSet):
 
     # This api is used to delete subscriber in public page
     @action(detail=False, methods=["delete"], url_path="unsubscribe_public")
-    def unsubscribe(self, request, pk=None):
+    def unsubscribe_public(self, request, pk=None):
         user_token = request.GET.get("id")
         if not user_token:
             raise ValidationError({"Error": "Please privide user or user required"})

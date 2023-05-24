@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_saml2_auth",
     "rest_framework_jwt",
+    "rest_framework_jwt.blacklist",
 ]
 
 MIDDLEWARE = [
@@ -264,15 +265,14 @@ DEFAULT_FROM_EMAIL = "status@data-axle.com"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 JWT_AUTH = {
-    "JWT_EXPIRATION_DELTA": timedelta(minutes=30),
-    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(minutes=15),
+    "JWT_EXPIRATION_DELTA": timedelta(hours=1),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=1),
     "JWT_ALLOW_REFRESH": True,
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
 }
 SAML2_AUTH = {
-    "METADATA_AUTO_CONF_URL": "https://dev-76352903.okta.com/app/exk9hhsvzfqWA1KEx5d7/sso/saml/metadata",
+    "METADATA_AUTO_CONF_URL": "https://dev-76352903.okta.com/app/exk9kgu19sE4NMAnZ5d7/sso/saml/metadata",
     "DEFAULT_NEXT_URL": "/",
     "CREATE_USER": "False",
     "ATTRIBUTES_MAP": {

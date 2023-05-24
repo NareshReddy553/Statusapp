@@ -35,9 +35,31 @@ logger = logging.getLogger("common.serializers")
 
 
 class BusinessUnitSerializer(serializers.ModelSerializer):
+    createduser = serializers.SerializerMethodField()
+    modifieduser = serializers.SerializerMethodField()
+
+    def get_createduser(self, obj):
+        return get_cached_user(obj.createduser_id)
+
+    def get_modifieduser(self, obj):
+        return get_cached_user(obj.modifieduser_id)
+
     class Meta:
         model = Businessunits
         fields = "__all__"
+
+    @transaction.atomic
+    def create(self, validated_data):
+        user = Users.objects.get(email=self.context["request"].user.username)
+        validated_data["createduser"] = user
+        validated_data["modifieduser"] = user
+        try:
+            l_businessunit = super().create(validated_data)
+        except Exception as e:
+            raise ValidationError(
+                {"Error": "Businessunit name is required in the payload"}
+            )
+        return l_businessunit
 
 
 class ComponentStatusSerializer(serializers.ModelSerializer):
