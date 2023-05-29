@@ -261,7 +261,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 }
                 # x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(l_incident.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin"
+                subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}]"
 
                 l_mass_email.append(
                     send_email(
@@ -336,8 +336,6 @@ class ComponentsViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Components.objects.all()
     serializer_class = ComponentsSerializer
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_fields = {"component_name": {'in'}}
 
     def get_queryset(self):
 
@@ -735,9 +733,7 @@ class SubscribersViewset(viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            data = self.get_paginated_response(serializer.data)
-
-            return data
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -40,9 +40,7 @@ else:
 
 def signin(r):
 
-    next_url = r.GET.get(
-        "next", settings.SAML2_AUTH.get("DEFAULT_NEXT_URL", "hi naresh")
-    )
+    next_url = r.GET.get("next", settings.SAML2_AUTH.get("DEFAULT_NEXT_URL", ""))
     try:
         if "next=" in unquote(next_url):
             next_url = _urlparse.parse_qs(_urlparse.urlparse(unquote(next_url)).query)[
@@ -178,6 +176,7 @@ def acs(r):
 
     try:
         target_user = User.objects.get(username=user_name)
+        ##################################################
         # check this user in ur database
         # create or update the user
         db_user = Users.objects.get(email=target_user.email)
@@ -188,6 +187,7 @@ def acs(r):
                 last_name=target_user.last_name,
                 is_active=target_user.is_active,
             )
+        #######################################################
         if settings.SAML2_AUTH.get("TRIGGER", {}).get("BEFORE_LOGIN", None):
             import_string(settings.SAML2_AUTH["TRIGGER"]["BEFORE_LOGIN"])(user_identity)
     except User.DoesNotExist:

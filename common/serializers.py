@@ -294,7 +294,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             }
             # x = datetime.now().strftime("%x %I:%M %p")
             l_status = str(l_incident.status).capitalize()
-            subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin [ACER No#{l_incident.acer_number}] "
+            subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}] "
 
             l_mass_email.append(
                 send_email(
@@ -605,7 +605,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 }
                 # x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(l_sch_mnt.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
+                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin [ACER No# {l_sch_mnt.acer_number}]"
 
                 l_mass_email.append(
                     send_email(
@@ -775,7 +775,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 }
                 x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(instance.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin"
+                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin [ACER No# {instance.acer_number}]"
 
                 l_mass_email.append(
                     send_email(

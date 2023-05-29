@@ -21,5 +21,5 @@ COPY requirements.txt /code/
 RUN pip install --upgrade pip --no-cache-dir
 RUN pip install -r requirements.txt
 COPY . /code/
-EXPOSE 29170
-CMD ["/bin/sh", "-c", "python manage.py runserver 0.0.0.0:29170"]
+EXPOSE 8080
+CMD ["/bin/sh", "-c", "python manage.py runserver 0.0.0.0:8080"]
