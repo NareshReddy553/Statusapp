@@ -24,9 +24,9 @@ from common.views import signin_okta
 
 urlpatterns = [
     path("saml2_auth/acs/", acs),
-    path("admin/login/", signin_okta),
-    path("jwt_refresh", refresh_jwt_token),
-    path("admin/signout", django_saml2_auth.views.signout),
+    path("auth/token/", signin_okta),
+    path("auth/token/jwt_refresh", refresh_jwt_token),
+    # path("admin/signout", django_saml2_auth.views.signout),
     # path(
     #     "auth/token/", jwt_views.TokenObtainPairView.as_view(), name="token_obtain_pair"
     # ),
