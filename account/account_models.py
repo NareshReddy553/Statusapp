@@ -29,7 +29,7 @@ class Users(models.Model):
 
     modify_datetime = models.DateTimeField(db_column="MODIFY_DATETIME", auto_now=True)
     last_businessiunit_name = models.CharField(
-        db_column="LAST_BUSINESSIUNIT_NAME", max_length=10, blank=True, null=True
+        db_column="LAST_BUSINESSIUNIT_NAME", max_length=200, blank=True, null=True
     )
 
     class Meta:

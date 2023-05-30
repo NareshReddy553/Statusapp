@@ -9,7 +9,7 @@ def get_cached_user(userid):
     if user is None:
         user = Users.objects.values(
             "user_id", "email", "first_name", "last_name"
-        ).get(pk=userid)
+        ).filter(pk=userid).first()
         if user is not None:
             cache.set("USER_" + str(userid), user, 120)
     return user

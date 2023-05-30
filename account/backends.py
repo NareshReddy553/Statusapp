@@ -180,19 +180,22 @@ def acs(r):
         ##################################################
         # check this user in ur database
         # create or update the user
-        db_user = Users.objects.get(email=target_user.email)
+        db_user = Users.objects.filter(email=target_user.email).first()
         businessunit_obj=Businessunits.objects.filter(is_active=True)
+        if not businessunit_obj:
+            l_businessunit_name=None
+        l_businessunit_name=businessunit_obj[0].businessunit_name
         if not db_user:
             Users.objects.create(
                 email=target_user.email,
                 firstname=target_user.first_name,
                 last_name=target_user.last_name,
                 is_active=target_user.is_active,
-                last_businessiunit_name=businessunit_obj[0].businessunit_name
+                last_businessiunit_name=l_businessunit_name
             )
         db_user.lastlogin_date= datetime.datetime.now()
         if not db_user.last_businessiunit_name:
-            db_user.last_businessiunit_name=businessunit_obj[0].businessunit_name
+            db_user.last_businessiunit_name=l_businessunit_name
         db_user.save()
         #######################################################
         if settings.SAML2_AUTH.get("TRIGGER", {}).get("BEFORE_LOGIN", None):
