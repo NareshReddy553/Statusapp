@@ -188,7 +188,7 @@ def acs(r):
         if not db_user:
             Users.objects.create(
                 email=target_user.email,
-                firstname=target_user.first_name,
+                first_name=target_user.first_name,
                 last_name=target_user.last_name,
                 is_active=target_user.is_active,
                 last_businessiunit_name=l_businessunit_name
