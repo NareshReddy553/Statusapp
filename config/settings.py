@@ -179,7 +179,7 @@ REST_FRAMEWORK = {
         "rest_framework_jwt.authentication.JSONWebTokenAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 50,
+    "PAGE_SIZE": 5,
 }
 
 
@@ -263,7 +263,7 @@ JWT_AUTH = {
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
 }
 SAML2_AUTH = {
-    "METADATA_AUTO_CONF_URL": "https://dev-76352903.okta.com/app/exk9hhsvzfqWA1KEx5d7/sso/saml/metadata",
+    "METADATA_AUTO_CONF_URL": "https://data-axle.okta.com/app/exk9ghz03toIWmfjj5d7/sso/saml/metadata",
     "DEFAULT_NEXT_URL": "/",
     "CREATE_USER": "False",
     "ATTRIBUTES_MAP": {
