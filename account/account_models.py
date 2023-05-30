@@ -20,7 +20,7 @@ class Users(models.Model):
     is_active = models.BooleanField(db_column="IS_ACTIVE")
 
     lastlogin_date = models.DateTimeField(
-        db_column="LASTLOGIN_DATE", blank=True, null=True
+        db_column="LASTLOGIN_DATE", blank=True, null=True,auto_now=True
     )
 
     created_datetime = models.DateTimeField(

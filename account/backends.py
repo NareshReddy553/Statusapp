@@ -3,7 +3,7 @@ import urllib.parse
 import urllib.parse as _urlparse
 import urllib.request as _urllib
 from urllib.parse import unquote
-
+import datetime
 from django import get_version
 from django.conf import settings
 from django.contrib.auth import get_user_model, login, logout
@@ -28,6 +28,7 @@ from saml2.client import Saml2Client
 from saml2.config import Config as Saml2Config
 
 from account.account_models import Users
+from common.models import Businessunits
 
 User = get_user_model()
 
@@ -180,13 +181,19 @@ def acs(r):
         # check this user in ur database
         # create or update the user
         db_user = Users.objects.get(email=target_user.email)
+        businessunit_obj=Businessunits.objects.filter(is_active=True)
         if not db_user:
             Users.objects.create(
                 email=target_user.email,
                 firstname=target_user.first_name,
                 last_name=target_user.last_name,
                 is_active=target_user.is_active,
+                last_businessiunit_name=businessunit_obj[0].businessunit_name
             )
+        db_user.lastlogin_date= datetime.datetime.now()
+        if not db_user.last_businessiunit_name:
+            db_user.last_businessiunit_name=businessunit_obj[0].businessunit_name
+        db_user.save()
         #######################################################
         if settings.SAML2_AUTH.get("TRIGGER", {}).get("BEFORE_LOGIN", None):
             import_string(settings.SAML2_AUTH["TRIGGER"]["BEFORE_LOGIN"])(user_identity)
