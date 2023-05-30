@@ -193,10 +193,11 @@ def acs(r):
                 is_active=target_user.is_active,
                 last_businessiunit_name=l_businessunit_name
             )
-        db_user.lastlogin_date= datetime.datetime.now()
-        if not db_user.last_businessiunit_name:
-            db_user.last_businessiunit_name=l_businessunit_name
-        db_user.save()
+        else:
+            db_user.lastlogin_date= datetime.datetime.now()
+            if not db_user.last_businessiunit_name:
+                db_user.last_businessiunit_name=l_businessunit_name
+            db_user.save()
         #######################################################
         if settings.SAML2_AUTH.get("TRIGGER", {}).get("BEFORE_LOGIN", None):
             import_string(settings.SAML2_AUTH["TRIGGER"]["BEFORE_LOGIN"])(user_identity)
