@@ -9,6 +9,7 @@ from account.account_models import Users
 
 from common.models import Components, Incidents
 from common.serializers import ComponentsSerializer, IncidentSerializer
+from common.services import AllRecordsPagination
 
 
 class UsersViewset(viewsets.ModelViewSet):
@@ -16,7 +17,7 @@ class UsersViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = UsersProfileSerializer
     queryset = Users.objects.filter(is_active=True)
-    pagination_class=None
+    pagination_class=AllRecordsPagination
 
     @action(detail=True, methods=["patch"], url_path="update_lastlogin")
     def update_userlast_businessunit(self, request, pk=None):

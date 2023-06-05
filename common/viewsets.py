@@ -37,6 +37,7 @@ from common.serializers import (
     ScheduledMaintanenceSerializer,
     SubscribersSerializer,
 )
+from common.services import AllRecordsPagination
 from common.utils import get_component_status
 
 
@@ -44,7 +45,7 @@ class BusinessunitViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Businessunits.objects.all()
     serializer_class = BusinessUnitSerializer
-    pagination_class=None
+    pagination_class=AllRecordsPagination
 
     @transaction.atomic
     @action(detail=True, methods=["patch"], url_path="inactive_businessunit")
