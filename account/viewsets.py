@@ -16,6 +16,7 @@ class UsersViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = UsersProfileSerializer
     queryset = Users.objects.filter(is_active=True)
+    pagination_class=None
 
     @action(detail=True, methods=["patch"], url_path="update_lastlogin")
     def update_userlast_businessunit(self, request, pk=None):

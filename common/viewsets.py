@@ -44,6 +44,7 @@ class BusinessunitViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Businessunits.objects.all()
     serializer_class = BusinessUnitSerializer
+    pagination_class=None
 
     @transaction.atomic
     @action(detail=True, methods=["patch"], url_path="inactive_businessunit")

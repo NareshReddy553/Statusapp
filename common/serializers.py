@@ -269,8 +269,10 @@ class IncidentSerializer(serializers.ModelSerializer):
                 )
 
         if create_recipients:
-            IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
-
+            try:
+                IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
+            except Exception as e:
+                return e
         if l_incident_components_activity:
             incident_activity_obj = IncidentsComponentActivitys.objects.bulk_create(
                 l_incident_components_activity
@@ -605,7 +607,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 }
                 # x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(l_sch_mnt.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin [ACER No# {l_sch_mnt.acer_number}]"
+                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin "
 
                 l_mass_email.append(
                     send_email(
@@ -775,7 +777,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                 }
                 x = datetime.now().strftime("%x %I:%M %p")
                 l_status = str(instance.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin [ACER No# {instance.acer_number}]"
+                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin "
 
                 l_mass_email.append(
                     send_email(

@@ -1,3 +1,4 @@
+import logging
 import urllib.error
 import urllib.parse
 import urllib.parse as _urlparse
@@ -29,6 +30,8 @@ from saml2.config import Config as Saml2Config
 
 from account.account_models import Users
 from common.models import Businessunits
+
+logger = logging.getLogger("account.backends")
 
 User = get_user_model()
 
@@ -186,6 +189,7 @@ def acs(r):
             l_businessunit_name=None
         l_businessunit_name=businessunit_obj[0].businessunit_name
         if not db_user:
+            logger.info("Okta user not found in db so creating the new user")
             Users.objects.create(
                 email=target_user.email,
                 first_name=target_user.first_name,
@@ -193,7 +197,10 @@ def acs(r):
                 is_active=target_user.is_active,
                 last_businessiunit_name=l_businessunit_name
             )
+            logger.debug("username: " + target_user.email)
         else:
+            logger.info("user found in db updating the last user login ")
+            logger.debug("username"+ target_user.email)
             db_user.lastlogin_date= datetime.datetime.now()
             if not db_user.last_businessiunit_name:
                 db_user.last_businessiunit_name=l_businessunit_name

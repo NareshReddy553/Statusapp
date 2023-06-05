@@ -447,7 +447,7 @@ class SchMntActivity(models.Model):
 
 class IncidentTemplate(models.Model):
     template_id = models.AutoField(primary_key=True)
-    template_name = models.CharField(unique=True, max_length=250)
+    template_name = models.CharField( max_length=250)
     incident_title = models.CharField(max_length=250, blank=True, null=True)
     description = models.CharField(max_length=2000, blank=True, null=True)
     created_datetime = models.DateTimeField(auto_now_add=True)
@@ -475,12 +475,13 @@ class IncidentTemplate(models.Model):
         managed = False
         db_table = "Incident_Template"
         ordering = ["-modified_datetime"]
+        unique_together = (('template_name', 'businessunit_id'),)
 
 
 class IncidentAdditionalRecipients(models.Model):
     inc_recipient_id = models.AutoField(primary_key=True)
-    email = models.CharField(max_length=100)
-    is_active = models.IntegerField(blank=True, null=True)
+    email = models.EmailField(max_length=100)
+    is_active = models.IntegerField(blank=True, null=True,default=True)
     created_datetime = models.DateTimeField(blank=True, null=True, auto_now_add=True)
     incident = models.ForeignKey(
         Incidents, on_delete=models.CASCADE, related_name="inc_recipient+"
@@ -493,8 +494,8 @@ class IncidentAdditionalRecipients(models.Model):
 
 class SchMntAdditionalRecipients(models.Model):
     sch_mnt_recipient_id = models.AutoField(primary_key=True)
-    email = models.CharField(max_length=100)
-    is_active = models.IntegerField(blank=True, null=True)
+    email = models.EmailField(max_length=100)
+    is_active = models.IntegerField(blank=True, null=True,default=True)
     created_datetime = models.DateTimeField(blank=True, null=True, auto_now_add=True)
     sch_inc = models.ForeignKey(
         ScheduledMaintenance, on_delete=models.CASCADE, related_name="sch_recipient+"
