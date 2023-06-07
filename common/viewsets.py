@@ -39,13 +39,14 @@ from common.serializers import (
 )
 from common.services import AllRecordsPagination
 from common.utils import get_component_status
+from common.validators import email_validate
 
 
 class BusinessunitViewset(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Businessunits.objects.all()
     serializer_class = BusinessUnitSerializer
-    pagination_class=AllRecordsPagination
+    pagination_class = AllRecordsPagination
 
     @transaction.atomic
     @action(detail=True, methods=["patch"], url_path="inactive_businessunit")
@@ -213,6 +214,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
             create_recipients = []
             if recipients:
                 for mail in recipients:
+                    email_validate(mail)
                     inc_emails = IncidentAdditionalRecipients.objects.filter(
                         incident=l_incident, email=mail
                     ).first()
@@ -231,6 +233,11 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 ).update(is_active=False)
             if create_recipients:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
+                recipients_list = list(
+                    IncidentAdditionalRecipients.objects.filter(
+                        incident=l_incident, is_active=True
+                    ).values_list("email", flat=True)
+                )
             if inc_comp_update:
                 IncidentComponent.objects.bulk_update(
                     inc_comp_update,
@@ -270,7 +277,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         template="incident_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=[user.email] + recipients,
+                        recipient_list=[user.email] + recipients_list,
                     )
                 )
 
@@ -961,3 +968,12 @@ class IncidentTemplateViewset(viewsets.ModelViewSet):
             inc_temp_obj.save()
 
         return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="inc_temp_businessunit")
+    def inc_temp_businessunit(self, request, pk=None):
+
+        queryset = self.get_queryset()
+        if queryset:
+            serializer = self.serializer_class(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)

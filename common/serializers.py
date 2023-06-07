@@ -30,6 +30,7 @@ from common.models import (
     SubcriberComponent,
     Subscribers,
 )
+from common.validators import email_validate
 
 logger = logging.getLogger("common.serializers")
 
@@ -262,6 +263,7 @@ class IncidentSerializer(serializers.ModelSerializer):
         create_recipients = []
         if recipients:
             for mail in recipients:
+                email_validate(mail)
                 create_recipients.append(
                     IncidentAdditionalRecipients(
                         email=mail, is_active=True, incident=l_incident
@@ -271,6 +273,11 @@ class IncidentSerializer(serializers.ModelSerializer):
         if create_recipients:
             try:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
+                recipients_list = list(
+                    IncidentAdditionalRecipients.objects.filter(
+                        incident=l_incident, is_active=True
+                    ).values_list("email", flat=True)
+                )
             except Exception as e:
                 return e
         if l_incident_components_activity:
@@ -303,7 +310,7 @@ class IncidentSerializer(serializers.ModelSerializer):
                     template="incident_email_notification.html",
                     subject=subject,
                     context_data=context,
-                    recipient_list=[user.email] + recipients,
+                    recipient_list=[user.email] + recipients_list,
                 )
             )
 
@@ -582,6 +589,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             create_recipients = []
             if recipients:
                 for mail in recipients:
+                    email_validate(mail)
                     create_recipients.append(
                         SchMntAdditionalRecipients(
                             email=mail, is_active=True, sch_inc=l_sch_mnt
@@ -589,6 +597,11 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     )
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)
+                recipients_list = list(
+                    SchMntAdditionalRecipients.objects.filter(
+                        sch_inc=l_sch_mnt, is_active=True
+                    ).values_list("email", flat=True)
+                )
             if Subscriber_list:
 
                 l_mass_email = []
@@ -614,7 +627,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                         template="scheduled_maintenance_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=[user.email] + recipients,
+                        recipient_list=[user.email] + recipients_list,
                     )
                 )
 
@@ -740,6 +753,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             create_recipients = []
             if recipients:
                 for mail in recipients:
+                    email_validate(mail)
                     sch_inc_emails = SchMntAdditionalRecipients.objects.filter(
                         sch_inc=instance, email=mail
                     ).first()
@@ -759,6 +773,11 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             ).update(is_active=False)
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)
+                recipients_list = list(
+                    SchMntAdditionalRecipients.objects.filter(
+                        sch_inc=instance, is_active=True
+                    ).values_list("email", flat=True)
+                )
             if Subscriber_list:
 
                 l_mass_email = []
@@ -784,7 +803,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                         template="scheduled_maintenance_email_notification.html",
                         subject=subject,
                         context_data=context,
-                        recipient_list=[user.email] + recipients,
+                        recipient_list=[user.email] + recipients_list,
                     )
                 )
 
