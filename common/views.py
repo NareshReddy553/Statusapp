@@ -113,9 +113,9 @@ def get_statuspage_components_list(request):
 def get_sidebar_list(request):
     """
     This API is to get the list of components based on the businessunit,display order and group number.
+
     """
     queryset = Sidebar.objects.filter(
-        businessunit__businessunit_name=request.headers.get("businessunit"),
         is_active=True,
     ).values()
     sidebar_list = []

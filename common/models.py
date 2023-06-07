@@ -291,10 +291,6 @@ class UserBusinessunits(models.Model):
 class Sidebar(models.Model):
     sidebar_id = models.AutoField(db_column="SIDEBAR_ID", primary_key=True)
     sidebar_name = models.CharField(db_column="SIDEBAR_NAME", max_length=100)
-    # businessunit_id = models.IntegerField(db_column='BUSINESSUNIT_ID')
-    businessunit = models.ForeignKey(
-        Businessunits, on_delete=models.CASCADE, related_name="sidebar_bs"
-    )
 
     createduser = models.ForeignKey(
         Users,
