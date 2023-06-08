@@ -233,7 +233,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 ).update(is_active=False)
             if create_recipients:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
-                recipients_list = list(
+            recipients_list = list(
                     IncidentAdditionalRecipients.objects.filter(
                         incident=l_incident, is_active=True
                     ).values_list("email", flat=True)

@@ -273,13 +273,14 @@ class IncidentSerializer(serializers.ModelSerializer):
         if create_recipients:
             try:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
-                recipients_list = list(
+                
+            except Exception as e:
+                return e
+        recipients_list = list(
                     IncidentAdditionalRecipients.objects.filter(
                         incident=l_incident, is_active=True
                     ).values_list("email", flat=True)
                 )
-            except Exception as e:
-                return e
         if l_incident_components_activity:
             incident_activity_obj = IncidentsComponentActivitys.objects.bulk_create(
                 l_incident_components_activity
@@ -597,7 +598,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     )
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)
-                recipients_list = list(
+            recipients_list = list(
                     SchMntAdditionalRecipients.objects.filter(
                         sch_inc=l_sch_mnt, is_active=True
                     ).values_list("email", flat=True)
@@ -773,7 +774,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
             ).update(is_active=False)
             if create_recipients:
                 SchMntAdditionalRecipients.objects.bulk_create(create_recipients)
-                recipients_list = list(
+            recipients_list = list(
                     SchMntAdditionalRecipients.objects.filter(
                         sch_inc=instance, is_active=True
                     ).values_list("email", flat=True)
