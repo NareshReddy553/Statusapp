@@ -1,7 +1,6 @@
 name: StatusApp-backend-CICD
 on: 
-    push:
-      branches: [ gha-prod ]
+    workflow_dispatch
       
 jobs:
     docker:
@@ -24,7 +23,5 @@ jobs:
             aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 893347428853.dkr.ecr.us-east-2.amazonaws.com
             docker build --platform linux/amd64 -t status-app-backend-prod .                    
             docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
-            docker push 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
-            docker rmi 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
-            docker rmi status-app-backend-prod:latest
+            docker push 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest===
       
