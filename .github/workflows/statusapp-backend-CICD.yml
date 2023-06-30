@@ -1,6 +1,7 @@
 name: StatusApp-backend-CICD
 on: 
-    workflow_dispatch
+    push:
+      branches: [ gha-prod ]
       
 jobs:
     docker:
