@@ -1,7 +1,6 @@
 name: StatusApp-backend-CICD
 on: 
-    workflow_dispatch
-      
+    workflow_dispatch     
 jobs:
     docker:
       name: Docker build and Push
