@@ -8,6 +8,9 @@ lib
 libclntsh.dylib
 migrations
 
+
+*.*.pyc
+
 *.log
 
 *.pot
@@ -19,3 +22,6 @@ migrations
 */*/__pycache__/
 
 */__pycache__/
+
+# Environments
+.env
