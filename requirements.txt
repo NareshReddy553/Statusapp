@@ -10,3 +10,4 @@ python-dateutil
 django-saml2-auth
 drf-jwt
 pre-commit
+python-decouple
