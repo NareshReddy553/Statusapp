@@ -1,0 +1,32 @@
+[flake8]
+# See link below for available options
+# https://flake8.pycqa.org/en/latest/user/options.html#options-and-their-descriptions
+# Move this to pyproject.toml as soon as it is supported.
+# See https://gitlab.com/pycqa/flake8/issues/428
+
+exclude =
+    .git,
+    .github,
+    .venv,
+    .eggs,
+    .mypy_cache,
+    .pytest_cache,
+    .tox,
+    __pycache__,
+    *.pyc,
+    */snapshots/*,
+    hubconf.py,
+    terraform/modules/*,
+    */migrations/*,
+    docs/build,
+    automation/**
+max-line-length = 100
+max-doc-length = 100
+# W503- https://github.com/psf/black/issues/52
+ignore = ANN101,ANN204,W503,D100,D101,D102,D103,D106,D107,D401,E265, E501, F401,F403,F405,F821,F841,W505,D200,B105
+per-file-ignores =
+    __init__.py: F401, F403, F405, D104, D107
+    *_test.py: ANN201, ANN001,D100
+    *conftest.py: ANN201, ANN001, D103 , ANN204,D100, D107
+show_source = True
+statistics = True

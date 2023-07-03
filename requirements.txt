@@ -1,6 +1,12 @@
+asgiref==3.5.2
 autopep8==2.0.0
 Django==3.2.16
 django-cors-headers==3.13.0
 django-filter==22.1
 djangorestframework==3.14.0
+djangorestframework-simplejwt==5.2.2
 mysqlclient==2.1.1
+python-dateutil
+django-saml2-auth
+drf-jwt
+pre-commit
