@@ -245,7 +245,7 @@ JWT_AUTH = {
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
 }
 SAML2_AUTH = {
-    "METADATA_AUTO_CONF_URL": "https://dev-76352903.okta.com/app/exk9kgu19sE4NMAnZ5d7/sso/saml/metadata",
+    "METADATA_AUTO_CONF_URL": "https://data-axle.okta.com/app/exk9ghz03toIWmfjj5d7/sso/saml/metadata",
     "DEFAULT_NEXT_URL": "/",
     "CREATE_USER": "False",
     "ATTRIBUTES_MAP": {
@@ -255,11 +255,11 @@ SAML2_AUTH = {
         "last_name": "LastName",
         "role": "role",
     },
-    "ASSERTION_URL": "http://18.118.80.163:29170",  # Custom URL to validate incoming SAML requests against
-    "ENTITY_ID": "http://18.118.80.163:29170/saml2_auth/acs/",  # Populates the Issuer element in authn request
+    "ASSERTION_URL": "http://18.118.80.163:8080",  # Custom URL to validate incoming SAML requests against
+    "ENTITY_ID": "http://18.118.80.163:8080/saml2_auth/acs/",  # Populates the Issuer element in authn request
     "NAME_ID_FORMAT": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",  # Sets the Format property of authn NameIDPolicy element
     "USE_JWT": True,  # Set this to True if you are running a Single Page Application (SPA) with Django Rest Framework (DRF), and are using JWT authentication to authorize client users
-    "FRONTEND_URL": "http://localhost:3000/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
+    "FRONTEND_URL": "http://18.118.80.163/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
 }
 
 UNSUBSCRIBE_URL = (
