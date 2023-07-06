@@ -19,7 +19,8 @@ jobs:
         - name: Build Docker
           run: |
             pwd
-            ls      
+            ls
+            aws ssm get-parameters --region us-east-1 --names "/status-app/prod/env" --with-decryption --output text --query "Parameters[*].{Value:Value}" > .env      
             aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 893347428853.dkr.ecr.us-east-2.amazonaws.com
             docker build --platform linux/amd64 -t status-app-backend-prod .                    
             docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
