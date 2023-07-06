@@ -25,4 +25,4 @@ jobs:
             docker build --platform linux/amd64 -t status-app-backend-prod .                    
             docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
             docker push 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
-            aws ecs update-service --service status-app-frontend-service --cluster status-app --force-new-deployment
+            #aws ecs update-service --service status-app-frontend-service --cluster status-app --force-new-deployment
