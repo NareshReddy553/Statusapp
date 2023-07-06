@@ -31,14 +31,14 @@ SAML2_AUTH = {
         "last_name": "LastName",
         "role": "role",
     },
-    "ASSERTION_URL": "http://status-api.data-axle.com",  # Custom URL to validate incoming SAML requests against
-    "ENTITY_ID": "http://status-api.data-axle.com/saml2_auth/acs/",  # Populates the Issuer element in authn request
+    "ASSERTION_URL": "https://status-api.data-axle.com",  # Custom URL to validate incoming SAML requests against
+    "ENTITY_ID": "https://status-api.data-axle.com/saml2_auth/acs/",  # Populates the Issuer element in authn request
     "NAME_ID_FORMAT": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",  # Sets the Format property of authn NameIDPolicy element
     "USE_JWT": True,  # Set this to True if you are running a Single Page Application (SPA) with Django Rest Framework (DRF), and are using JWT authentication to authorize client users
-    "FRONTEND_URL": "http://status-app.data-axle.com/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
+    "FRONTEND_URL": "https://status-app.data-axle.com/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
 }
 
 UNSUBSCRIBE_URL = (
-    "http://status-app.data-axle.com/Status/{l_businessunit_name}/unsubscribe/{token}"
+    "https://status-app.data-axle.com/Status/{l_businessunit_name}/unsubscribe/{token}"
 )
-MANAGE_SUBSCRIBER_URL = "http://status-app.data-axle.com/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
+MANAGE_SUBSCRIBER_URL = "https://status-app.data-axle.com/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
