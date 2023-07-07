@@ -37,6 +37,14 @@ SAML2_AUTH = {
     "FRONTEND_URL": "http://18.118.80.163/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
 }
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
+EMAIL_HOST = "smtp.office365.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "status@data-axle.com"
+EMAIL_HOST_PASSWORD = "YN@ADsLWv4T$*1"
+DEFAULT_FROM_EMAIL = "status@data-axle.com"
+
 UNSUBSCRIBE_URL = (
     "http://18.118.80.163/Status/{l_businessunit_name}/unsubscribe/{token}"
 )

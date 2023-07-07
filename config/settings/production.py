@@ -4,7 +4,7 @@ from .base import *
 
 SECRET_KEY = config("SECRET_KEY")
 
-DEBUG = config("DEBUG", cast=bool)
+DEBUG = config("DEBUG", default=True, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -21,7 +21,7 @@ DATABASES = {
 }
 
 SAML2_AUTH = {
-    "METADATA_AUTO_CONF_URL": "https://data-axle.okta.com/app/exka84uqtvZw4XyRx5d7/sso/saml/metadata",
+    "METADATA_AUTO_CONF_URL": config("METADATA_AUTO_CONF_URL"),
     "DEFAULT_NEXT_URL": "/",
     "CREATE_USER": "False",
     "ATTRIBUTES_MAP": {
@@ -42,3 +42,11 @@ UNSUBSCRIBE_URL = (
     "https://status-app.data-axle.com/Status/{l_businessunit_name}/unsubscribe/{token}"
 )
 MANAGE_SUBSCRIBER_URL = "https://status-app.data-axle.com/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
+
+EMAIL_BACKEND = config("EMAIL_BACKEND")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool)
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT", cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")

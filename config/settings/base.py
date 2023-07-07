@@ -225,14 +225,6 @@ STATICFILES_DIRS = [
 USER_CACHE_TTL = 900
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_USE_TLS = True
-EMAIL_HOST = "smtp.office365.com"
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "status@data-axle.com"
-EMAIL_HOST_PASSWORD = "YN@ADsLWv4T$*1"
-DEFAULT_FROM_EMAIL = "status@data-axle.com"
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
