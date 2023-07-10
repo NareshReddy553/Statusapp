@@ -1,0 +1,28 @@
+name: StatusApp-backend-CICD
+on: 
+    push:
+      branches: [ gha-prod ]     
+jobs:
+    docker:
+      name: Docker build and Push
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 1
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{secrets.AWS_STATUS_APPS_ACCESS_KEY}}
+            aws-secret-access-key: ${{secrets.AWS_STATUS_APPS_SECRET_KEY}}
+            aws-region: us-east-2
+        - name: Build Docker
+          run: |
+            pwd
+            ls
+            aws ssm get-parameters --region us-east-2 --names "/status-app/prod/env" --with-decryption --output text --query "Parameters[*].{Value:Value}" > .env      
+            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 893347428853.dkr.ecr.us-east-2.amazonaws.com
+            docker build --platform linux/amd64 -t status-app-backend-prod .                    
+            docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
+            docker push 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
+            #aws ecs update-service --service status-app-frontend-service --cluster status-app --force-new-deployment
