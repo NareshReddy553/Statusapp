@@ -26,3 +26,4 @@ COPY . /code/
 
 EXPOSE 8080
 CMD ["/bin/sh", "-c", "python manage.py runserver --settings=config.settings.production 0.0.0.0:8080"]
+
