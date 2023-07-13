@@ -1,7 +1,8 @@
 name: StatusApp-backend-CICD
 on: 
     push:
-      branches: [ gra-prod ]
+      branches: 
+        - gra-prod
 jobs:  
     docker:
       name: Docker build and Deploy On ECS
