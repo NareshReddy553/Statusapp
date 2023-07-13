@@ -17,7 +17,7 @@ jobs:
             aws-access-key-id: ${{secrets.AWS_STATUS_APPS_ACCESS_KEY}}
             aws-secret-access-key: ${{secrets.AWS_STATUS_APPS_SECRET_KEY}}
             aws-region: us-east-2
-        - name: Build Docker
+        - name: Build Docker and Deploy To ECS
           run: |
             pwd
             ls
