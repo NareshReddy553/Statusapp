@@ -1,9 +1,8 @@
 name: StatusApp-backend-CICD
 on: 
     push:
-      tags:
-        - v*.*.*
-jobs:
+    branches: [ gra-prod ]
+jobs:  
     docker:
       name: Docker build and Push
       runs-on: ubuntu-latest
