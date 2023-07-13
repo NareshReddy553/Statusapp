@@ -4,7 +4,7 @@ on:
     branches: [ gra-prod ]
 jobs:  
     docker:
-      name: Docker build and Push
+      name: Docker build and Deploy On ECS
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v2
