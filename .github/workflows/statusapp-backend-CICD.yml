@@ -1,7 +1,8 @@
 name: StatusApp-backend-CICD
 on: 
     push:
-      branches: [ gha-prod ]     
+      tags:
+        - v*.*.*
 jobs:
     docker:
       name: Docker build and Push
