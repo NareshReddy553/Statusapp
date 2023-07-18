@@ -1,7 +1,6 @@
 __pycache__
 .vscode
 config/local.py
-.env
 .idea
 databasename.db3
 lib
@@ -24,4 +23,4 @@ migrations
 */__pycache__/
 
 # Environments
-.env
+
