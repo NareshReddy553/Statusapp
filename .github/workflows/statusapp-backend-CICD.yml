@@ -25,6 +25,7 @@ jobs:
             docker build --platform linux/amd64 -t status-app-backend-prod .                    
             docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
     
+    # Push The Docker Image In ECR Repository
     docker_push_ecs_deploy:
       name: Docker Push and Deploy On ECS
       needs: docker_build
