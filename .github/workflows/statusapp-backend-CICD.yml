@@ -50,7 +50,7 @@ jobs:
             docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
             docker push 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
             aws ecs update-service --service status-app-backend-service --cluster status-app --force-new-deployment  
-            
+    # Tag the deplyment
     tag-prod-deployment:
         name: Tag PROD Deployment
         needs: docker_push_ecs_deploy
