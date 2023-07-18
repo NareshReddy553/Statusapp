@@ -3,9 +3,33 @@ on:
     push:
       branches: [ gha-prod ]
 jobs:  
-    docker:
-      name: Docker build and Deploy On ECS
+    docker_build:
+      name: Docker build
       runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 1
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{secrets.AWS_STATUS_APPS_ACCESS_KEY}}
+            aws-secret-access-key: ${{secrets.AWS_STATUS_APPS_SECRET_KEY}}
+            aws-region: us-east-2
+        - name: Build Docker
+          run: |
+            pwd
+            ls
+            aws ssm get-parameters --region us-east-2 --names "/status-app/prod/env" --with-decryption --output text --query "Parameters[*].{Value:Value}" > .env      
+            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 893347428853.dkr.ecr.us-east-2.amazonaws.com
+            docker build --platform linux/amd64 -t status-app-backend-prod .                    
+            docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
+    
+    docker_push_ecs_deploy:
+      name: Docker Push and Deploy On ECS
+      needs: docker_build
+      runs-on: ubuntu-latest
+      environment: 'PROD'
       steps:
         - uses: actions/checkout@v2
           with:
@@ -26,4 +50,20 @@ jobs:
             docker tag status-app-backend-prod:latest 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
             docker push 893347428853.dkr.ecr.us-east-2.amazonaws.com/status-app-backend-prod:latest
             aws ecs update-service --service status-app-backend-service --cluster status-app --force-new-deployment  
-
+            
+    tag-prod-deployment:
+        name: Tag PROD Deployment
+        needs: docker_push_ecs_deploy
+        runs-on: ubuntu-latest
+        steps:
+          - name: short sha
+            id: short_sha
+            run: echo "::set-output name=sha_short::$(echo ${{github.sha}} | cut -c1-8)"
+          - name: Tag
+            id: date
+            run: echo "::set-output name=date::$(date +'%Y%m%d')"
+          - uses: actions/checkout@v3
+          - uses: rickstaa/action-create-tag@v1
+            with:
+              tag: "PROD_RELEASE_${{ steps.date.outputs.date }}_${{ steps.short_sha.outputs.sha_short }}"
+              message: "Latest with ${{github.sha}}"
