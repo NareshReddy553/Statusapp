@@ -1,5 +1,7 @@
 import datetime
 
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Max, Q
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,7 +13,7 @@ from rest_framework.response import Response
 
 from account.account_models import Users
 from account.utils import get_hashed_password
-from common.mailer import send_email, send_mass_mail
+from common.mailer import send_email, send_email_to_sms, send_mass_mail
 from common.models import (
     Businessunits,
     Components,
@@ -234,10 +236,10 @@ class IncidentsViewset(viewsets.ModelViewSet):
             if create_recipients:
                 IncidentAdditionalRecipients.objects.bulk_create(create_recipients)
             recipients_list = list(
-                    IncidentAdditionalRecipients.objects.filter(
-                        incident=l_incident, is_active=True
-                    ).values_list("email", flat=True)
-                )
+                IncidentAdditionalRecipients.objects.filter(
+                    incident=l_incident, is_active=True
+                ).values_list("email", flat=True)
+            )
             if inc_comp_update:
                 IncidentComponent.objects.bulk_update(
                     inc_comp_update,
@@ -258,7 +260,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 subscribers_email = list(
                     Subscribers.objects.filter(
                         subscriber_id__in=Subscriber_list
-                    ).values_list("email", "subscriber_token")
+                    ).values_list("email", "subscriber_token", "sms_delivery")
                 )
                 l_status = str(l_incident.status).capitalize()
                 context = {
@@ -280,13 +282,13 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         recipient_list=[user.email] + recipients_list,
                     )
                 )
+                sms_subscribers = []
+                for email, token, sms in subscribers_email:
+                    if sms:
+                        sms_subscribers.append(sms)
 
-                for email, token in subscribers_email:
-                    context["unsubscribe_url"] = (
-                        "http://18.118.80.163/Status/"
-                        + l_businessunit_name
-                        + "/unsubscribe/"
-                        + token
+                    context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
+                        l_businessunit_name=l_businessunit_name, token=token
                     )
                     l_mass_email.append(
                         send_email(
@@ -298,6 +300,20 @@ class IncidentsViewset(viewsets.ModelViewSet):
                     )
 
                 send_mass_mail(l_mass_email)
+                date = l_incident.modify_datetime.strftime("%A ,%B %d %Y ,%I:%M %p")
+                status_public_url = settings.STATUS_PUBLIC_URL.format(
+                    l_businessunit_name=l_businessunit_name
+                )
+                subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
+                # send_email_to_sms(template='test.txt', context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
+
+                send_mail(
+                    subject="",
+                    message=subject,
+                    from_email="status@data-axle.com",  # Replace with your email address
+                    recipient_list=sms_subscribers,
+                    fail_silently=False,
+                )
 
             return Response(status=status.HTTP_200_OK)
         else:

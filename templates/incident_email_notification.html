@@ -293,7 +293,7 @@
 
                         <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0" style="background-color:#efeff0;">
                             <tr>
-                              <td height="30" style="font-size:30px; line-height:30px;">&nbsp;</td>
+                              <td height="30" style="font-size:30px; line-height:30px;">&#160;</td>
                             </tr>
                         </table>
                         
@@ -326,11 +326,20 @@
                                                 class="raleway"
                                                 bgcolor="#ffffff"
                                                 valign="bottom"
-                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 21px; padding: 0px 60px 20px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;"
+                                                style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 21px; padding: 0px 60px 20px 60px; "
                                             >
                                                 {{incident_data.message|safe}}
                                             </td>
                                         </tr>
+
+                                        <tr>
+                                            <tr>
+                                                <td align="middle" class="x_raleway" bgcolor="#ffffff" valign="bottom" style="font-family:'raleway',Arial,Helvetica,sans-serif; font-weight:500; font-size:15px; line-height:21px; padding:0px 60px 20px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+                                                    <p><b>Impact Severity : </b>{{incident_data.impact_severity}}</p>
+                                                </td>
+                                            </tr>
+                                        </tr>
+
                                     </table>
                                 </td>
                             </tr>
@@ -364,8 +373,8 @@
                         
                                         <tr>
                                             <td align="left" class="raleway" bgcolor="#ffffff" valign="bottom" style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 24px; padding: 0px 50px 10px 60px;">
-                                                <span style="color: #27b14f !important;">&bull;</span>
-                                                &nbsp; {{data}}
+                                                <span style="color: #27b14f !important;">&#8226;</span>
+                                                &#160; {{data}}
                                             </td>
                                         </tr>
                         
@@ -383,7 +392,7 @@
                                                 valign="bottom"
                                                 style="font-family: 'raleway', Arial, Helvetica, sans-serif; font-weight: 500; font-size: 16px; line-height: 24px; padding: 0px 50px 10px 60px; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;"
                                             >
-                                                &nbsp;
+                                            &#160;
                                             </td>
                                         </tr>
                                         <br />
@@ -396,7 +405,7 @@
 
                         <table cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#efeff0" style="background-color:#efeff0;">
                             <tr>
-                              <td height="30" style="font-size:30px; line-height:30px;">&nbsp;</td>
+                              <td height="30" style="font-size:30px; line-height:30px;">&#160;</td>
                             </tr>
                         </table>
 
@@ -480,7 +489,7 @@
                                                 class="raleway"
                                                 style="text-align: center; font-weight: regular; font-size: 12px; font-family: 'Open Sans', Arial, Helvetica, sans-serif; color: #95989a; font-weight: 500; padding: 0px 20px 0px 0px;"
                                             >
-                                                Copyright &copy; 2023 Data Axle
+                                                Copyright © 2023 Data Axle
                                             </td>
                                         </tr>
                                         <tr>

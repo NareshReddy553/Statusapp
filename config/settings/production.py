@@ -42,6 +42,7 @@ UNSUBSCRIBE_URL = (
     "https://status-app.data-axle.com/Status/{l_businessunit_name}/unsubscribe/{token}"
 )
 MANAGE_SUBSCRIBER_URL = "https://status-app.data-axle.com/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
+STATUS_PUBLIC_URL = "https://status-app.data-axle.com/Status/{l_businessunit_name}"
 
 EMAIL_BACKEND = config("EMAIL_BACKEND")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool)

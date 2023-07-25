@@ -37,6 +37,7 @@ SAML2_AUTH = {
     "FRONTEND_URL": "http://18.118.80.163/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
 }
 
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_USE_TLS = True
 EMAIL_HOST = "smtp.office365.com"
@@ -51,3 +52,5 @@ UNSUBSCRIBE_URL = (
 MANAGE_SUBSCRIBER_URL = (
     "http://18.118.80.163/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
 )
+
+STATUS_PUBLIC_URL = "http://18.118.80.163/Status/{l_businessunit_name}"
