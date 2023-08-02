@@ -285,7 +285,7 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 sms_subscribers = []
                 for email, token, sms in subscribers_email:
                     if sms:
-                        sms_subscribers.append(sms)
+                        sms_subscribers.append(email)
 
                     context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
                         l_businessunit_name=l_businessunit_name, token=token
