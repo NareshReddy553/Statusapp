@@ -175,10 +175,10 @@ class Subscribers(models.Model):
         db_column="LAST_NAME", max_length=200, blank=True, null=True
     )
     email = models.EmailField(
-        db_column="EMAIL", unique=True, max_length=500, blank=True, null=True
+        db_column="EMAIL", max_length=500, blank=True, null=True
     )
     phone_number = models.CharField(
-        db_column="PHONE_NUMBER", unique=True, blank=True, null=True, max_length=10
+        db_column="PHONE_NUMBER",blank=True, null=True, max_length=10
     )
     is_active = models.BooleanField(db_column="IS_ACTIVE", default=True)
     email_delivery = models.BooleanField(
@@ -200,6 +200,7 @@ class Subscribers(models.Model):
         managed = False
         db_table = "subscribers"
         ordering = ["-modify_datetime"]
+        unique_together = [["email", "businessunit"],["businessunit","phone_number"]]
 
     def save(self, *args, **kwargs):
         try:
