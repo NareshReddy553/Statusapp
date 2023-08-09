@@ -19,6 +19,7 @@ from common.softdelete.managers import SoftDeleteManger
 from common.softdelete.models import SoftDeleteModelMixin
 from common.softdelete.querysets import SoftDeletionQuerySet
 from common.validators import email_validate
+from rest_framework.exceptions import ValidationError
 
 DUPLICATE_USERNAME_ERROR = "Duplicate Email Error"
 
@@ -200,10 +201,23 @@ class Subscribers(models.Model):
         managed = False
         db_table = "subscribers"
         ordering = ["-modify_datetime"]
-        unique_together = [["email", "businessunit"],["businessunit","phone_number"]]
+        # unique_together = [["email", "businessunit"],["businessunit","phone_number"]]
 
+    def clean(self):
+        # Check if a record with the same combination of field1 and field2 already exists
+        # unique_together=[['email','businessunit'],['phone_number','businessunit']]
+        if self.email_delivery:
+            existing_record = self._meta.model.objects.filter(email=self.email, businessunit=self.businessunit)
+            if existing_record.exists():
+                raise ValidationError("This Email is already exist in this businessunit.Please provide Another Email")
+        if self.sms_delivery:
+            existing_record = self._meta.model.objects.filter(phone_number=self.phone_number, businessunit=self.businessunit)
+            if existing_record.exists():
+                raise ValidationError("This Phone number is already in exist in this businessunit.Please provide Another Phone number")
+    
     def save(self, *args, **kwargs):
         try:
+            self.full_clean()
             super(Subscribers, self).save(*args, **kwargs)
         except IntegrityError as e:
             raise DuplicateUsernameError(
