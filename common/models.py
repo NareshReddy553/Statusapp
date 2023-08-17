@@ -12,7 +12,7 @@ import uuid
 from django.conf import settings
 from django.db import IntegrityError, models
 
-from account.account_models import Users
+from account.models import Users
 from account.utils import get_hashed_password
 from common.exceptions import DuplicateUsernameError
 from common.softdelete.managers import SoftDeleteManger

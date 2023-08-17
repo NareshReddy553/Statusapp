@@ -1,6 +1,6 @@
 from decouple import Csv, config
 
-from .base import *
+from .base_settings import *
 
 SECRET_KEY = config("SECRET_KEY")
 
@@ -20,22 +20,28 @@ DATABASES = {
     }
 }
 
-SAML2_AUTH = {
-    "METADATA_AUTO_CONF_URL": config("METADATA_AUTO_CONF_URL"),
-    "DEFAULT_NEXT_URL": "/",
-    "CREATE_USER": "False",
-    "ATTRIBUTES_MAP": {
-        "email": "Email",
-        "username": "UserName",
-        "first_name": "FirstName",
-        "last_name": "LastName",
-        "role": "role",
-    },
-    "ASSERTION_URL": "https://status-api.data-axle.com",  # Custom URL to validate incoming SAML requests against
-    "ENTITY_ID": "https://status-api.data-axle.com/saml2_auth/acs/",  # Populates the Issuer element in authn request
-    "NAME_ID_FORMAT": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",  # Sets the Format property of authn NameIDPolicy element
-    "USE_JWT": True,  # Set this to True if you are running a Single Page Application (SPA) with Django Rest Framework (DRF), and are using JWT authentication to authorize client users
-    "FRONTEND_URL": "https://status-app.data-axle.com/admin/dashboard",  # Redirect URL for the client if you are using JWT auth with DRF. See explanation below
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "user_id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=120),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 UNSUBSCRIBE_URL = (

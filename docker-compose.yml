@@ -1,19 +1,30 @@
 version: '3.9'
 
 services:
-  # database:
-  #   image: mysql:5.7
-  #   ports:
-  #     - '3307:3306'
-  #   environment:
-  #      MYSQL_DATABASE: 'tsapp1_dev'
-  #      MYSQL_USER: 'root'
-  #      MYSQL_PASSWORD: '16e91a0553'
-  #      MYSQL_ROOT_PASSWORD: '16e91a0553'
-  web:
+  
+  tsapp_backend:
     build: .
-    container_name: tsapp_con
-    command:  >
-      bash -c "python manage.py runserver 0.0.0.0:8000"
+    container_name: tsapp_backend
+    command: python manage.py runserver 0.0.0.0:8080
+    volumes:
+      - .:/usr/src/tsapp_backend/
     ports:
-      - "8000:8000"
+      - "8080:8080"
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE:config.settings.local
+    depends_on:
+      - redis
+
+  celery:
+    build:  .
+    command:  celery -A config worker -l INFO
+    volumes:
+      - .:/user/src/tsapp_backend
+    depends_on:
+      - tsapp_backend
+      - redis
+
+  redis:
+    image: "redis:alpine"

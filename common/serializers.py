@@ -10,10 +10,11 @@ from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from account.account_models import Users
+from account.models import Users
 from account.services import get_cached_user
+from account.tasks import send_email_notifications, send_sms_notifications
 from account.utils import get_hashed_password, get_subscriber_hashed
-from common.mailer import send_email, send_email_to_sms, send_mass_mail
+from common.mailer import send_email,send_mass_mail
 from common.models import (
     Businessunits,
     Components,
@@ -53,7 +54,8 @@ class BusinessUnitSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        user = Users.objects.get(email=self.context["request"].user.username)
+        user = self.context['request'].user
+        # user = Users.objects.get(email=self.context["request"].user.username)
         validated_data["createduser"] = user
         validated_data["modifieduser"] = user
         try:
@@ -171,8 +173,8 @@ class IncidentSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        # user = self.context['request'].user
-        user = Users.objects.get(email=self.context["request"].user.username)
+        user = self.context['request'].user
+        # user = Users.objects.get(email=self.context["request"].user)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()
@@ -288,69 +290,60 @@ class IncidentSerializer(serializers.ModelSerializer):
                 l_incident_components_activity
             )
 
-        if Subscriber_list:
-
-            l_mass_email = []
-            subscribers_email = list(
-                Subscribers.objects.filter(
-                    subscriber_id__in=Subscriber_list
-                ).values_list("email", "subscriber_token", "sms_delivery")
-            )
-            l_status = str(l_incident.status).capitalize()
-            context = {
-                "incident_data": l_incident,
+        # email&sms notifications
+        email_send_list=[]
+        sms_send_list=[]
+        l_status = str(l_incident.status).capitalize()
+        context = {
+                "incident_data": {"message":l_incident.message,"impact_severity":l_incident.impact_severity,"name":l_incident.name},
                 "component_data": components_effected,
                 "user": user.email,
                 "businessunit": l_businessunit_name,
                 "status": l_status,
             }
-            # x = datetime.now().strftime("%x %I:%M %p")
-            l_status = str(l_incident.status).capitalize()
-            subject = f"[{l_businessunit_name} platform status update] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}] "
-            # sms_content=subject+" "+
-            # sms_subscriber=send_email_to_sms(template, context_data, subject, recipient_list, attachments=[])
+        subject = f"[{l_businessunit_name} platform status update] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}] "
+        # for normal app users
+        email_send_list.append({
+            "subject":subject,
+            "context":context,
+            "recipients":[user.email] + recipients_list
+            
+        })
 
-            l_mass_email.append(
-                send_email(
-                    template="incident_email_notification.html",
-                    subject=subject,
-                    context_data=context,
-                    recipient_list=[user.email] + recipients_list,
-                )
+        # For subscribers
+        
+        if Subscriber_list:
+            subscribers_email = list(
+                Subscribers.objects.filter(
+                    subscriber_id__in=Subscriber_list
+                ).values_list("email", "subscriber_token", "sms_delivery")
             )
+            if subscribers_email:
+                for email, token, sms in subscribers_email:
+                    if sms:
+                        sms_send_list.append(email)
+                        continue
 
-            sms_subscribers = []
-            for email, token, sms in subscribers_email:
-                if sms:
-                    sms_subscribers.append(email)
-
-                context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
-                    l_businessunit_name=l_businessunit_name, token=token
-                )
-                l_mass_email.append(
-                    send_email(
-                        template="incident_email_notification.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=[email],
+                    subsciber_context=context
+                    subsciber_context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
+                        l_businessunit_name=l_businessunit_name, token=token
                     )
-                )
+                    
+                    email_send_list.append({
+                        "subject":subject,
+                        "context":subsciber_context,
+                        "recipients":[email]
+                    })
 
-            send_mass_mail(l_mass_email)
-            status_public_url = settings.STATUS_PUBLIC_URL.format(
-                l_businessunit_name=l_businessunit_name
-            )
-            subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
-            # send_email_to_sms(template=None, context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
-            from django.core.mail import send_mail
-
-            send_mail(
-                subject="",
-                message=subject,
-                from_email="status@data-axle.com",  # Replace with your email address
-                recipient_list=sms_subscribers,
-                fail_silently=False,
-            )
+        status_public_url = settings.STATUS_PUBLIC_URL.format(
+            l_businessunit_name=l_businessunit_name
+        )
+        sms_subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
+        # send_email_to_sms(template=None, context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
+        if sms_send_list:
+            send_sms_notifications.delay(sms_subject,sms_send_list)
+        if email_send_list:
+            send_email_notifications.delay('incident_email_notification.html',email_send_list)
 
         return l_incident
 
@@ -549,8 +542,8 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        # user = self.context['request'].user
-        user = Users.objects.get(email=self.context["request"].user.username)
+        user = self.context['request'].user
+        # user = Users.objects.get(email=self.context["request"].user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()
@@ -674,8 +667,8 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        # user = self.context['request'].user
-        user = Users.objects.get(email=self.context["request"].user.username)
+        user = self.context['request'].user
+        # user = Users.objects.get(email=self.context["request"].user.username)
         initialdata = self.initial_data.get("components")
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
@@ -880,8 +873,8 @@ class IncidentTemplateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        # user = self.context['request'].user
-        user = Users.objects.get(email=self.context["request"].user.username)
+        user = self.context['request'].user
+        # user = Users.objects.get(email=self.context["request"].user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()
@@ -899,8 +892,8 @@ class IncidentTemplateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        # user = self.context['request'].user
-        user = Users.objects.get(email=self.context["request"].user.username)
+        user = self.context['request'].user
+        # user = Users.objects.get(email=self.context["request"].user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()

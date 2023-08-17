@@ -20,7 +20,7 @@ from corsheaders.defaults import default_headers
 sys.dont_write_bytecode = True
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 # Quick-start development settings - unsuitable for production
@@ -43,9 +43,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "corsheaders",
-    "django_saml2_auth",
-    "rest_framework_jwt",
-    "rest_framework_jwt.blacklist",
 ]
 
 MIDDLEWARE = [
@@ -137,32 +134,44 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "businessunit",
 ]
 
-AUTHENTICATION_BACKENDS = ["django.conrib.auth.backends.ModelBackend"]
+AUTHENTICATION_BACKENDS = ["account.backends.AccountBackend"]
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,
+        },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "account.validators.NumberValidator",
+        "OPTIONS": {
+            "min_digits": 1,
+        },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "account.validators.UppercaseValidator",
+    },
+    {
+        "NAME": "account.validators.LowercaseValidator",
+    },
+    {
+        "NAME": "account.validators.SymbolValidator",
     },
 ]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_jwt.authentication.JSONWebTokenAuthentication",
+        # "rest_framework_jwt.authentication.JSONWebTokenAuthentication",
+        "account.backends.AccountJWTAuthentication",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 5,
 }
+
+	
 
 
 LOGGING = {
@@ -230,12 +239,8 @@ USER_CACHE_TTL = 900
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-JWT_AUTH = {
-    "JWT_EXPIRATION_DELTA": timedelta(hours=1),
-    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=1),
-    "JWT_ALLOW_REFRESH": True,
-    "JWT_AUTH_HEADER_PREFIX": "Bearer",
-}
+CELERY_BROKER_URL=os.environ.get("CELERY_BROKER","redis://redis:6379/0")
+CELERY_RESULT_BACKEND=os.environ.get("CELERY_BACKEND","redis://redis:6379/0")
 
-
-SMS_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+PASSWORD_RESET_TIMEOUT_MINUTES = 60
+FORGOT_PASSWORD_URL = "http://18.118.80.163/setPassword"

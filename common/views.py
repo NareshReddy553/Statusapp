@@ -5,16 +5,13 @@ from django import get_version
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.utils.http import is_safe_url
-from django_saml2_auth.views import get_current_domain
-from pkg_resources import parse_version
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from account.account_models import Users
-from account.backends import _get_saml_client, signin
+from account.models import Users
 from common.models import (
     Businessunits,
     CommonLookups,
@@ -41,17 +38,7 @@ from common.serializers import (
     SchMntActivitySerializer,
     StatusPageIncidentsSerializer,
 )
-from common.utils import component_group_order, get_components_all_list
-from config import settings
-
-# from account.permissions import IsBusinessUnitUser
-
-
-@api_view(["GET"])
-def signin_okta(request):
-    redirect_url = signin(request)
-    return Response({"redirect_url": redirect_url})
-
+from common.utils import  get_components_all_list
 
 @api_view(["GET"])
 @permission_classes(
@@ -211,28 +198,6 @@ def get_status_page_sch_mnt_incidents(request):
 def get_network_lists(request):
     network_list = Smsgateway.objects.values_list("network", flat=True)
     return Response(network_list, status=status.HTTP_200_OK)
-
-
-def Mytemplates(request):
-    l_incident = Incidents.objects.first()
-    components_effected = ["adobe", "import", "export", "yesmail marketing"]
-    l_status = str(l_incident.status).capitalize()
-    context = {
-        "incident_data": l_incident,
-        "component_data": components_effected,
-        "user": "naresh.gangireddy@data-axle.com",
-        "status": l_status,
-        "name": l_incident.name,
-        "message": l_incident.message,
-    }
-
-    subject = f"[Data Axle platform status updates] Incident {l_status} - Admin"
-    return render(
-        request,
-        template_name="subscriber_email_notification.html",
-        context=context,
-    )
-    # return render(request, template_name='start.html', context=context)
 
 
 @api_view(["GET"])

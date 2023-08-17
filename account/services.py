@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from account.account_models import Users
+from account.models import Users
 
 
 def get_cached_user(userid):

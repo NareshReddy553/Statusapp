@@ -3,7 +3,6 @@ from django.urls.conf import path
 from rest_framework import routers
 
 from common.views import (
-    Mytemplates,
     get_businessunits,
     get_components_list,
     get_dashboard_incident_component_status,
@@ -56,6 +55,5 @@ urlpatterns = [
     ),
     path(r"scheduled_maintanence/components_list", get_sch_mnt_component_list),
     path(r"incidents/impact_list", get_incident_impact_list),
-    path("template", Mytemplates),
     url("", include(router.urls)),
 ]

@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from account.serializers import UsersProfileSerializer
-from account.account_models import Users
+from account.models import Users
 
 from common.models import Components, Incidents
 from common.serializers import ComponentsSerializer, IncidentSerializer

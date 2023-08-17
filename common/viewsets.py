@@ -11,9 +11,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from account.account_models import Users
+from account.models import Users
+from account.tasks import send_email_notifications, send_sms_notifications
 from account.utils import get_hashed_password
-from common.mailer import send_email, send_email_to_sms, send_mass_mail
+from common.mailer import send_email,send_mass_mail
 from common.models import (
     Businessunits,
     Components,
@@ -53,7 +54,8 @@ class BusinessunitViewset(viewsets.ModelViewSet):
     @transaction.atomic
     @action(detail=True, methods=["patch"], url_path="inactive_businessunit")
     def inactive_businessunit(self, request, pk=None):
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         try:
             businessunit_obj = self.get_object()
             businessunit_obj.modifieduser = user
@@ -91,8 +93,8 @@ class IncidentsViewset(viewsets.ModelViewSet):
         l_incident = self.get_object()
         l_businessunit_name = request.headers.get("businessunit")
         Subscriber_list = []
-        # user = request.user
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()
@@ -299,21 +301,14 @@ class IncidentsViewset(viewsets.ModelViewSet):
                         )
                     )
 
-                send_mass_mail(l_mass_email)
+                send_email_notifications(l_mass_email)
                 date = l_incident.modify_datetime.strftime("%A ,%B %d %Y ,%I:%M %p")
                 status_public_url = settings.STATUS_PUBLIC_URL.format(
                     l_businessunit_name=l_businessunit_name
                 )
                 subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
                 # send_email_to_sms(template='test.txt', context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
-
-                send_mail(
-                    subject="",
-                    message=subject,
-                    from_email="status@data-axle.com",  # Replace with your email address
-                    recipient_list=sms_subscribers,
-                    fail_silently=False,
-                )
+                send_sms_notifications(subject,sms_subscribers)
 
             return Response(status=status.HTTP_200_OK)
         else:
@@ -322,7 +317,8 @@ class IncidentsViewset(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"], url_path="postmorterm")
     def postmorterm_incident(self, request, pk=None):
         input_data = request.data
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         if input_data is None or input_data.get("incident_postmortem") is None:
             raise ValidationError(
                 {
@@ -341,7 +337,8 @@ class IncidentsViewset(viewsets.ModelViewSet):
     @action(detail=True, methods=["delete"], url_path="delete_incident")
     def delete_incident(self, request, pk=None):
         l_incident = self.get_object()
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         try:
             # deleted_obj = Incidents.objects.filter(pk=pk).update(isdeleted=True,
             #  modifieduser=request.user, modify_datetime=datetime.datetime.now())
@@ -384,8 +381,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
     def create_component(self, request, pk=None):
         input_data = request.data
         l_businessunit_name = request.headers.get("businessunit")
-        # user = request.user
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()
@@ -495,7 +492,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"], url_path="update_component")
     def update_component(self, request, pk=None):
         input_data = request.data
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         l_component = self.get_object()
         l_businessunit_name = request.headers.get("businessunit")
         businessunit_qs = Businessunits.objects.filter(
@@ -655,8 +653,8 @@ class ComponentsViewset(viewsets.ModelViewSet):
         # user=request.user
         l_component = self.get_object()
         l_businessunit_name = request.headers.get("businessunit")
-        # user = request.user
-        user = Users.objects.get(email=request.user.username)
+        user = request.user
+        # user = Users.objects.get(email=request.user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
         ).first()
