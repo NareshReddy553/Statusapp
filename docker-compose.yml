@@ -1,19 +1,16 @@
-version: '3'
-
 services:
   
   tsapp_backend:
     build: .
     container_name: tsapp_backend
-    command: python manage.py --settings=config.local runserver 0.0.0.0:8080
+    command: python manage.py runserver 0.0.0.0:8080
     volumes:
-      - .:/usr/src/tsapp_backend/
+      - .:/code
     ports:
       - "8080:8080"
     environment:
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0
-      # - DJANGO_SETTINGS_MODULE:config.local
     depends_on:
       - redis
 
@@ -21,7 +18,7 @@ services:
     build:  .
     command:  celery -A config worker -l INFO
     volumes:
-      - .:/user/src/tsapp_backend
+      - .:/code
     depends_on:
       - tsapp_backend
       - redis
