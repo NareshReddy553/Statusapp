@@ -13,7 +13,7 @@ services:
     environment:
       - CELERY_BROKER=redis://redis:6379/0
       - CELERY_BACKEND=redis://redis:6379/0
-      - DJANGO_SETTINGS_MODULE:config.settings.local
+      - DJANGO_SETTINGS_MODULE:config.local
     depends_on:
       - redis
 
