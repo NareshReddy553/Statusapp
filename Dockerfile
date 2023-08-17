@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM python:3.9.7
-RUN  apt-get update
+RUN apt-get update && apt-get install gcc libaio1 wget unzip -y
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 WORKDIR /usr/src/tsapp_backend
