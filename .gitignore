@@ -1,6 +1,5 @@
 __pycache__
 .vscode
-config/local.py
 .idea
 databasename.db3
 lib
