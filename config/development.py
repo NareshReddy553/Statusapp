@@ -53,12 +53,12 @@ EMAIL_HOST_PASSWORD = "YN@ADsLWv4T$*1"
 DEFAULT_FROM_EMAIL = "status@data-axle.com"
 
 UNSUBSCRIBE_URL = (
-    "http://18.118.80.163/Status/{l_businessunit_name}/unsubscribe/{token}"
+    "http://34.229.207.97/Status/{l_businessunit_name}/unsubscribe/{token}"
 )
 MANAGE_SUBSCRIBER_URL = (
-    "http://18.118.80.163/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
+    "http://34.229.207.97/Status/{l_businessunit_name}/manage/{subscriber_Hash_id}"
 )
 
-STATUS_PUBLIC_URL = "http://18.118.80.163/Status/{l_businessunit_name}"
+STATUS_PUBLIC_URL = "http://34.229.207.97/Status/{l_businessunit_name}"
 
-LOGIN_URL="http://18.118.80.163"
+LOGIN_URL="http://34.229.207.97"
