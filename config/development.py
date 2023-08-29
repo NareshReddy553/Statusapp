@@ -10,10 +10,10 @@ ALLOWED_HOSTS = ["*"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "acq_tsapp_dev",
-        "USER": "tsapp_usr",
-        "PASSWORD": "a6uK$X#o0135",
-        "HOST": "18.118.80.163",
+        "NAME": "aware247",
+        "USER": "aware247",
+        "PASSWORD": "Aware!247!sTatus",
+        "HOST": "aware247.cdnwv8kjmo3k.us-east-1.rds.amazonaws.com",
         "PORT": "3306",
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
@@ -61,4 +61,4 @@ MANAGE_SUBSCRIBER_URL = (
 
 STATUS_PUBLIC_URL = "http://54.235.41.120:80/Status/{l_businessunit_name}"
 
-LOGIN_URL="http://54.235.41.120:80"
+LOGIN_URL = "http://54.235.41.120:80"

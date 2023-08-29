@@ -14,7 +14,7 @@ from account.models import Users
 from account.services import get_cached_user
 from account.tasks import send_email_notifications, send_sms_notifications
 from account.utils import get_hashed_password, get_subscriber_hashed
-from common.mailer import send_email,send_mass_mail
+from common.mailer import send_email, send_mass_mail
 from common.models import (
     Businessunits,
     Components,
@@ -54,7 +54,7 @@ class BusinessUnitSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        user = self.context['request'].user
+        user = self.context["request"].user
         # user = Users.objects.get(email=self.context["request"].user.username)
         validated_data["createduser"] = user
         validated_data["modifieduser"] = user
@@ -173,7 +173,7 @@ class IncidentSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        user = self.context['request'].user
+        user = self.context["request"].user
         # user = Users.objects.get(email=self.context["request"].user)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
@@ -291,27 +291,32 @@ class IncidentSerializer(serializers.ModelSerializer):
             )
 
         # email&sms notifications
-        email_send_list=[]
-        sms_send_list=[]
+        email_send_list = []
+        sms_send_list = []
         l_status = str(l_incident.status).capitalize()
         context = {
-                "incident_data": {"message":l_incident.message,"impact_severity":l_incident.impact_severity,"name":l_incident.name},
-                "component_data": components_effected,
-                "user": user.email,
-                "businessunit": l_businessunit_name,
-                "status": l_status,
-            }
+            "incident_data": {
+                "message": l_incident.message,
+                "impact_severity": l_incident.impact_severity,
+                "name": l_incident.name,
+            },
+            "component_data": components_effected,
+            "user": user.email,
+            "businessunit": l_businessunit_name,
+            "status": l_status,
+        }
         subject = f"[{l_businessunit_name} platform status update] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}] "
         # for normal app users
-        email_send_list.append({
-            "subject":subject,
-            "context":context,
-            "recipients":[user.email] + recipients_list
-            
-        })
+        email_send_list.append(
+            {
+                "subject": subject,
+                "context": context,
+                "recipients": [user.email] + recipients_list,
+            }
+        )
 
         # For subscribers
-        
+
         if Subscriber_list:
             subscribers_email = list(
                 Subscribers.objects.filter(
@@ -324,16 +329,20 @@ class IncidentSerializer(serializers.ModelSerializer):
                         sms_send_list.append(email)
                         continue
 
-                    subsciber_context=context
-                    subsciber_context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
+                    subsciber_context = context
+                    subsciber_context[
+                        "unsubscribe_url"
+                    ] = settings.UNSUBSCRIBE_URL.format(
                         l_businessunit_name=l_businessunit_name, token=token
                     )
-                    
-                    email_send_list.append({
-                        "subject":subject,
-                        "context":subsciber_context,
-                        "recipients":[email]
-                    })
+
+                    email_send_list.append(
+                        {
+                            "subject": subject,
+                            "context": subsciber_context,
+                            "recipients": [email],
+                        }
+                    )
 
         status_public_url = settings.STATUS_PUBLIC_URL.format(
             l_businessunit_name=l_businessunit_name
@@ -341,9 +350,11 @@ class IncidentSerializer(serializers.ModelSerializer):
         sms_subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
         # send_email_to_sms(template=None, context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
         if sms_send_list:
-            send_sms_notifications.delay(sms_subject,sms_send_list)
+            send_sms_notifications.delay(sms_subject, sms_send_list)
         if email_send_list:
-            send_email_notifications.delay('incident_email_notification.html',email_send_list)
+            send_email_notifications.delay(
+                "incident_email_notification.html", email_send_list
+            )
 
         return l_incident
 
@@ -473,12 +484,13 @@ class SubscribersSerializer(serializers.ModelSerializer):
         ]
         if l_sub_com_obj:
             inc_cmp_obj = SubcriberComponent.objects.bulk_create(l_sub_com_obj)
+
         #    Need to send the conformation mail
         subscriber_Hash_id = instance.subscriber_token
         subscribers_email = [instance.email]
         businessunit_name = l_businessunit_name
+        email_send_list = []
         if subscribers_email:
-            l_mass_email = []
             context = {
                 "subscriber": instance,
                 "businessunit": l_businessunit_name,
@@ -493,17 +505,19 @@ class SubscribersSerializer(serializers.ModelSerializer):
             }
             x = datetime.now().strftime("%x %I:%M %p")
             subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
-            logger.info("sending notification to subscribers ")
-            l_mass_email.append(
-                send_email(
-                    template="subscriber_email_notification.html",
-                    subject=subject,
-                    context_data=context,
-                    recipient_list=subscribers_email,
-                )
-            )
 
-            send_mass_mail(l_mass_email)
+            email_send_list.append(
+                {
+                    "subject": subject,
+                    "context": context,
+                    "recipients": subscribers_email,
+                }
+            )
+        if email_send_list:
+            logger.info("sending notification to subscribers ")
+            send_email_notifications.delay(
+                "subscriber_email_notification.html", email_send_list
+            )
 
         return instance
 
@@ -542,7 +556,7 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        user = self.context['request'].user
+        user = self.context["request"].user
         # user = Users.objects.get(email=self.context["request"].user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
@@ -614,60 +628,75 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     sch_inc=l_sch_mnt, is_active=True
                 ).values_list("email", flat=True)
             )
+
+            # email&sms notifications
+            email_send_list = []
+            sms_send_list = []
+            l_status = str(l_sch_mnt.status).capitalize()
+            start_date = l_sch_mnt.schstartdate.strftime("%x %I:%M %p")
+            end_date = l_sch_mnt.schenddate.strftime("%x %I:%M %p")
+            context = {
+                "incident_data": {"message": l_sch_mnt.message, "name": l_sch_mnt.name},
+                "component_data": components_effected,
+                "user": user.email,
+                "businessunit": l_businessunit_name,
+                "status": l_status,
+                "start_date": start_date,
+                "end_date": end_date,
+            }
+            subject = f"[{l_businessunit_name} platform status update] Scheduled Maintenance {l_status} - Admin"
+
+            email_send_list.append(
+                {
+                    "subject": subject,
+                    "context": context,
+                    "recipients": [user.email] + recipients_list,
+                }
+            )
+
             if Subscriber_list:
 
-                l_mass_email = []
                 subscribers_email = list(
                     Subscribers.objects.filter(
                         subscriber_id__in=Subscriber_list
-                    ).values_list("email", "subscriber_token")
+                    ).values_list("email", "subscriber_token", "sms_delivery")
                 )
-                l_status = str(l_sch_mnt.status).capitalize()
-                start_date = l_sch_mnt.schstartdate.strftime("%x %I:%M %p")
-                end_date = l_sch_mnt.schenddate.strftime("%x %I:%M %p")
-                context = {
-                    "incident_data": l_sch_mnt,
-                    "component_data": components_effected,
-                    "user": user.email,
-                    "businessunit": l_businessunit_name,
-                    "status": l_status,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                }
-
-                l_status = str(l_sch_mnt.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status update] Scheduled Maintenance {l_status} - Admin"
-
-                l_mass_email.append(
-                    send_email(
-                        template="scheduled_maintenance_email_notification.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=[user.email] + recipients_list,
-                    )
-                )
-
-                for email, token in subscribers_email:
-                    context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
+                for email, token, sms in subscribers_email:
+                    if sms:
+                        sms_send_list.append(email)
+                        continue
+                    subsciber_context = context
+                    subsciber_context[
+                        "unsubscribe_url"
+                    ] = settings.UNSUBSCRIBE_URL.format(
                         l_businessunit_name=l_businessunit_name, token=token
                     )
-                    l_mass_email.append(
-                        send_email(
-                            template="scheduled_maintenance_email_notification.html",
-                            subject=subject,
-                            context_data=context,
-                            recipient_list=[],
-                        )
-                    )
 
-                send_mass_mail(l_mass_email)
+                    email_send_list.append(
+                        {
+                            "subject": subject,
+                            "context": subsciber_context,
+                            "recipients": [email],
+                        }
+                    )
+            status_public_url = settings.STATUS_PUBLIC_URL.format(
+                l_businessunit_name=l_businessunit_name
+            )
+            sms_subject = f"[{l_businessunit_name} platform status update]  {l_status} : Maintenance Window Notification   {status_public_url}"
+            # send_email_to_sms(template=None, context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
+            if sms_send_list:
+                send_sms_notifications.delay(sms_subject, sms_send_list)
+            if email_send_list:
+                send_email_notifications.delay(
+                    "scheduled_maintenance_email_notification.html", email_send_list
+                )
 
         return l_sch_mnt
 
     @transaction.atomic
     def update(self, instance, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        user = self.context['request'].user
+        user = self.context["request"].user
         # user = Users.objects.get(email=self.context["request"].user.username)
         initialdata = self.initial_data.get("components")
         businessunit_qs = Businessunits.objects.filter(
@@ -791,54 +820,68 @@ class ScheduledMaintanenceSerializer(serializers.ModelSerializer):
                     sch_inc=instance, is_active=True
                 ).values_list("email", flat=True)
             )
+
+            # email&sms notifications
+            email_send_list = []
+            sms_send_list = []
+            l_status = str(instance.status).capitalize()
+            start_date = instance.schstartdate.strftime("%x %I:%M %p")
+            end_date = instance.schenddate.strftime("%x %I:%M %p")
+            context = {
+                "incident_data": {"message": instance.message, "name": instance.name},
+                "component_data": components_effected,
+                "user": user.email,
+                "businessunit": l_businessunit_name,
+                "status": l_status,
+                "start_date": start_date,
+                "end_date": end_date,
+            }
+            subject = f"[{l_businessunit_name} platform status update] Scheduled Maintenance {l_status} - Admin"
+
+            email_send_list.append(
+                {
+                    "subject": subject,
+                    "context": context,
+                    "recipients": [user.email] + recipients_list,
+                }
+            )
+
             if Subscriber_list:
 
-                l_mass_email = []
                 subscribers_email = list(
                     Subscribers.objects.filter(
                         subscriber_id__in=Subscriber_list
-                    ).values_list("email", "subscriber_token")
+                    ).values_list("email", "subscriber_token", "sms_delivery")
                 )
-                l_status = str(instance.status).capitalize()
-                start_date = instance.schstartdate.strftime("%x %I:%M %p")
-                end_date = instance.schenddate.strftime("%x %I:%M %p")
-                context = {
-                    "incident_data": instance,
-                    "component_data": components_effected,
-                    "user": user.email,
-                    "businessunit": l_businessunit_name,
-                    "status": l_status,
-                    "start_date": start_date,
-                    "end_date": end_date,
-                }
-                # x = datetime.now().strftime("%x %I:%M %p")
-                l_status = str(instance.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Scheduled Maintenance {l_status} - Admin "
-
-                l_mass_email.append(
-                    send_email(
-                        template="scheduled_maintenance_email_notification.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=[user.email] + recipients_list,
-                    )
-                )
-
-                for email, token in subscribers_email:
-                    context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
+                for email, token, sms in subscribers_email:
+                    if sms:
+                        sms_send_list.append(email)
+                        continue
+                    subsciber_context = context
+                    subsciber_context[
+                        "unsubscribe_url"
+                    ] = settings.UNSUBSCRIBE_URL.format(
                         l_businessunit_name=l_businessunit_name, token=token
                     )
-                    l_mass_email.append(
-                        send_email(
-                            template="scheduled_maintenance_email_notification.html",
-                            subject=subject,
-                            context_data=context,
-                            recipient_list=[email],
-                        )
+
+                    email_send_list.append(
+                        {
+                            "subject": subject,
+                            "context": subsciber_context,
+                            "recipients": [email],
+                        }
                     )
-
-                send_mass_mail(l_mass_email)
-
+            status_public_url = settings.STATUS_PUBLIC_URL.format(
+                l_businessunit_name=l_businessunit_name
+            )
+            sms_subject = f"[{l_businessunit_name} platform status update]  {l_status} : Maintenance Window Notification   {status_public_url}"
+            # send_email_to_sms(template=None, context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
+            if sms_send_list:
+                send_sms_notifications.delay(sms_subject, sms_send_list)
+            if email_send_list:
+                send_email_notifications.delay(
+                    "scheduled_maintenance_email_notification.html", email_send_list
+                )
         except Exception as e:
             return e
         return instance
@@ -873,7 +916,7 @@ class IncidentTemplateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        user = self.context['request'].user
+        user = self.context["request"].user
         # user = Users.objects.get(email=self.context["request"].user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True
@@ -892,7 +935,7 @@ class IncidentTemplateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         l_businessunit_name = self.context["request"].headers.get("businessunit")
-        user = self.context['request'].user
+        user = self.context["request"].user
         # user = Users.objects.get(email=self.context["request"].user.username)
         businessunit_qs = Businessunits.objects.filter(
             businessunit_name=l_businessunit_name, is_active=True

@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from account.models import Users
 from account.tasks import send_email_notifications, send_sms_notifications
 from account.utils import get_hashed_password
-from common.mailer import send_email,send_mass_mail
+from common.mailer import send_email, send_mass_mail
 from common.models import (
     Businessunits,
     Components,
@@ -256,59 +256,70 @@ class IncidentsViewset(viewsets.ModelViewSet):
                 IncidentsComponentActivitys.objects.bulk_create(
                     l_incident_components_activity
                 )
-            if Subscriber_list:
 
-                l_mass_email = []
+            # email&sms notifications
+            email_send_list = []
+            sms_send_list = []
+            l_status = str(l_incident.status).capitalize()
+            context = {
+                "incident_data": {
+                    "message": l_incident.message,
+                    "impact_severity": l_incident.impact_severity,
+                    "name": l_incident.name,
+                },
+                "component_data": components_effected,
+                "user": user.email,
+                "businessunit": l_businessunit_name,
+                "status": l_status,
+            }
+            subject = f"[{l_businessunit_name} platform status update] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}] "
+            # for normal app users
+            email_send_list.append(
+                {
+                    "subject": subject,
+                    "context": context,
+                    "recipients": [user.email] + recipients_list,
+                }
+            )
+
+            # For subscribers
+            if Subscriber_list:
                 subscribers_email = list(
                     Subscribers.objects.filter(
                         subscriber_id__in=Subscriber_list
                     ).values_list("email", "subscriber_token", "sms_delivery")
                 )
-                l_status = str(l_incident.status).capitalize()
-                context = {
-                    "incident_data": l_incident,
-                    "component_data": components_effected,
-                    "user": user.email,
-                    "businessunit": l_businessunit_name,
-                    "status": l_status,
-                }
-                # x = datetime.now().strftime("%x %I:%M %p")
-                l_status = str(l_incident.status).capitalize()
-                subject = f"[{l_businessunit_name} platform status updates] Incident {l_status} - Admin [ACER No# {l_incident.acer_number}]"
+                if subscribers_email:
 
-                l_mass_email.append(
-                    send_email(
-                        template="incident_email_notification.html",
-                        subject=subject,
-                        context_data=context,
-                        recipient_list=[user.email] + recipients_list,
-                    )
-                )
-                sms_subscribers = []
-                for email, token, sms in subscribers_email:
-                    if sms:
-                        sms_subscribers.append(email)
-
-                    context["unsubscribe_url"] = settings.UNSUBSCRIBE_URL.format(
-                        l_businessunit_name=l_businessunit_name, token=token
-                    )
-                    l_mass_email.append(
-                        send_email(
-                            template="incident_email_notification.html",
-                            subject=subject,
-                            context_data=context,
-                            recipient_list=[email],
+                    for email, token, sms in subscribers_email:
+                        if sms:
+                            sms_send_list.append(email)
+                            continue
+                        subsciber_context = context
+                        subsciber_context[
+                            "unsubscribe_url"
+                        ] = settings.UNSUBSCRIBE_URL.format(
+                            l_businessunit_name=l_businessunit_name, token=token
                         )
-                    )
 
-                send_email_notifications(l_mass_email)
-                date = l_incident.modify_datetime.strftime("%A ,%B %d %Y ,%I:%M %p")
-                status_public_url = settings.STATUS_PUBLIC_URL.format(
-                    l_businessunit_name=l_businessunit_name
+                        email_send_list.append(
+                            {
+                                "subject": subject,
+                                "context": subsciber_context,
+                                "recipients": [email],
+                            }
+                        )
+            status_public_url = settings.STATUS_PUBLIC_URL.format(
+                l_businessunit_name=l_businessunit_name
+            )
+            sms_subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
+
+            if sms_send_list:
+                send_sms_notifications.delay(sms_subject, sms_send_list)
+            if email_send_list:
+                send_email_notifications.delay(
+                    "incident_email_notification.html", email_send_list
                 )
-                subject = f"[{l_businessunit_name} platform status update]  {l_status} : {l_incident.name}   {status_public_url}"
-                # send_email_to_sms(template='test.txt', context_data=None,subject=subject , recipient_list=["4083903906@tmomail.net"], attachments=[])
-                send_sms_notifications(subject,sms_subscribers)
 
             return Response(status=status.HTTP_200_OK)
         else:

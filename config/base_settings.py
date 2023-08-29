@@ -84,37 +84,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {"default": {}}
 
-# To connect db from docker in ce2
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'tsapp_dev',
-#         'USER': 'root',
-#         'PASSWORD': 'a6uK$X#o0135',
-#         'HOST': '127.0.0.1',
-#         'PORT': '3306',
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-#         }
-#     }
-# }
-
-
-# local db
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'tsapp1_dev',
-#         'USER': 'root',
-#         'PASSWORD': '16e91a0553',
-#         'HOST': '127.0.0.1',
-#         'PORT': '3306',
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-#         }
-#     }
-# }
-
 if "test" in sys.argv:
     DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
     DATABASES["default"]["NAME"] = "databasename.db3"
@@ -170,8 +139,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 5,
 }
-
-	
 
 
 LOGGING = {
@@ -239,8 +206,8 @@ USER_CACHE_TTL = 900
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CELERY_BROKER_URL=os.environ.get("CELERY_BROKER","redis://redis:6379/0")
-CELERY_RESULT_BACKEND=os.environ.get("CELERY_BACKEND","redis://redis:6379/0")
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://redis:6379/0")
 
 PASSWORD_RESET_TIMEOUT_MINUTES = 60
 FORGOT_PASSWORD_URL = "http://54.235.41.120:80/setPassword"
