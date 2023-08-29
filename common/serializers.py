@@ -491,28 +491,37 @@ class SubscribersSerializer(serializers.ModelSerializer):
         businessunit_name = l_businessunit_name
         email_send_list = []
         if subscribers_email:
-            context = {
-                "subscriber": instance,
-                "businessunit": l_businessunit_name,
-                "subscriber_Hash_id": subscriber_Hash_id,
-                "manage_subscriber_url": settings.MANAGE_SUBSCRIBER_URL.format(
-                    l_businessunit_name=l_businessunit_name,
-                    subscriber_Hash_id=subscriber_Hash_id,
-                ),
-                "unsubscribe_url": settings.UNSUBSCRIBE_URL.format(
-                    l_businessunit_name=l_businessunit_name, token=subscriber_Hash_id
-                ),
-            }
-            x = datetime.now().strftime("%x %I:%M %p")
-            subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
-
-            email_send_list.append(
-                {
-                    "subject": subject,
-                    "context": context,
-                    "recipients": subscribers_email,
-                }
+            manage_subscriber_url = settings.MANAGE_SUBSCRIBER_URL.format(
+                l_businessunit_name=l_businessunit_name,
+                subscriber_Hash_id=subscriber_Hash_id,
             )
+            if instance.sms_delivery:
+                sms_subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application . {manage_subscriber_url}"
+                send_sms_notifications.delay(sms_subject, instance.email)
+            else:
+                context = {
+                    "subscriber": instance.email,
+                    "businessunit": l_businessunit_name,
+                    "subscriber_Hash_id": subscriber_Hash_id,
+                    "manage_subscriber_url": settings.MANAGE_SUBSCRIBER_URL.format(
+                        l_businessunit_name=l_businessunit_name,
+                        subscriber_Hash_id=subscriber_Hash_id,
+                    ),
+                    "unsubscribe_url": settings.UNSUBSCRIBE_URL.format(
+                        l_businessunit_name=l_businessunit_name,
+                        token=subscriber_Hash_id,
+                    ),
+                }
+                x = datetime.now().strftime("%x %I:%M %p")
+                subject = f"[{businessunit_name} platform status updates] Welcome to {businessunit_name} platform status application"
+
+                email_send_list.append(
+                    {
+                        "subject": subject,
+                        "context": context,
+                        "recipients": subscribers_email,
+                    }
+                )
         if email_send_list:
             logger.info("sending notification to subscribers ")
             send_email_notifications.delay(
